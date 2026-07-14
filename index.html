@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Aplicación local de antropometría OMS y somatotipo Heath-Carter">
+  <link rel="manifest" href="manifest.json">
+  <title>Estudio Antropométrico · V5.21</title>
+  <style>
+    :root {
+      --primary:#0f766e; --primary-dark:#115e59; --primary-soft:#ccfbf1;
+      --secondary:#155e75; --secondary-soft:#e0f2fe;
+      --warning:#f59e0b; --danger:#dc2626; --success:#15803d;
+      --bg:#f8fafc; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --border:#dbe4ea; --shadow:0 10px 30px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:1180px;margin:auto;padding:14px 14px 90px}
+    header{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;padding:22px;border-radius:24px;box-shadow:var(--shadow);margin-bottom:14px}
+    header h1{margin:0 0 6px;font-size:clamp(1.35rem,4vw,2.15rem)}
+    header p{margin:0;opacity:.9}
+    .privacy{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.14);font-size:.88rem}
+    .tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;position:sticky;top:0;background:rgba(248,250,252,.94);backdrop-filter:blur(10px);z-index:20}
+    .tab-btn{white-space:nowrap;border:1px solid var(--border);background:#fff;border-radius:999px;padding:10px 14px;color:var(--muted);font-weight:700}
+    .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .tab{display:none}.tab.active{display:block}
+    .grid{display:grid;gap:14px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+    .card h2,.card h3{margin-top:0}.card h2{font-size:1.25rem}.card h3{font-size:1.05rem}
+    .stat{padding:16px;border-radius:16px;background:linear-gradient(145deg,#fff,var(--secondary-soft));border:1px solid #c7e7f3}
+    .stat strong{display:block;font-size:1.8rem;color:var(--secondary)}
+    .stat span{font-size:.88rem;color:var(--muted)}
+    label{display:block;font-weight:700;font-size:.88rem;margin-bottom:6px}
+    input,select,textarea{width:100%;border:1px solid var(--border);border-radius:12px;padding:11px 12px;background:#fff;color:var(--text);outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+    .field{margin-bottom:12px}
+    .required::after{content:" *";color:var(--danger)}
+    .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+    .btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;background:var(--primary);color:#fff}
+    .btn:hover{filter:brightness(.96)}.btn.secondary{background:var(--secondary)}.btn.light{background:#e2e8f0;color:#0f172a}.btn.danger{background:var(--danger)}.btn.warning{background:var(--warning);color:#422006}.btn.success{background:var(--success)}
+    .small{font-size:.82rem}.muted{color:var(--muted)}.note{padding:12px;border-left:4px solid var(--warning);background:#fffbeb;border-radius:10px;font-size:.9rem}
+    .success-box{padding:12px;border-left:4px solid var(--success);background:#f0fdf4;border-radius:10px}
+    .danger-box{padding:12px;border-left:4px solid var(--danger);background:#fef2f2;border-radius:10px}
+    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px}
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    th,td{padding:10px 11px;text-align:left;border-bottom:1px solid var(--border);font-size:.88rem}
+    th{background:#f1f5f9;position:sticky;top:0;z-index:1}
+    tr:hover td{background:#f8fafc}
+    .badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:.77rem;font-weight:800;background:var(--secondary-soft);color:var(--secondary)}
+    .badge.ok{background:#dcfce7;color:#166534}.badge.warn{background:#fef3c7;color:#92400e}.badge.bad{background:#fee2e2;color:#991b1b}
+    .result-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .result{border:1px solid var(--border);border-radius:14px;padding:13px;background:#fff}
+    .result .value{font-size:1.28rem;font-weight:900;color:var(--primary)}
+    .result .label{font-size:.78rem;color:var(--muted)}
+    canvas{width:100%;height:auto;display:block;border-radius:16px;background:#fff;border:1px solid var(--border)}
+    .empty{text-align:center;padding:30px;color:var(--muted)}
+    .filebox{border:2px dashed #94a3b8;border-radius:16px;padding:20px;text-align:center;background:#f8fafc}
+    .filebox input{margin-top:12px}
+    .footer{padding:20px 4px;color:var(--muted);font-size:.78rem;text-align:center}
+    details{border:1px solid var(--border);border-radius:14px;padding:12px;background:#fff;margin-bottom:10px}
+    summary{font-weight:800;cursor:pointer}
+    .hidden{display:none!important}
+    @media screen and (max-width:800px){
+      .grid-2,.grid-3,.grid-4,.result-grid{grid-template-columns:1fr}
+      .app{padding:8px 8px 86px} header{border-radius:18px;padding:18px}
+      .card{padding:14px;border-radius:15px}.tabs{top:0}.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    .type-heading{display:flex;align-items:center;gap:8px}
+    .body-icon{width:34px;height:44px;display:inline-block;vertical-align:middle;flex:0 0 auto}
+    .body-icon svg{width:100%;height:100%;display:block}
+    .somato-legend{display:flex;flex-wrap:wrap;gap:14px;margin:12px 0}
+    .somato-legend-item{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--muted)}
+    .report-page{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+    .report-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid var(--primary-soft);padding-bottom:14px;margin-bottom:16px}
+    .report-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+    .report-evaluation{border:1px solid var(--border);border-radius:15px;padding:14px;margin-top:12px;break-inside:avoid}
+    .report-evaluation h3{margin:0 0 10px}
+    .report-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    .report-metric{padding:9px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0}
+    .report-metric strong{display:block;color:var(--primary)}
+    .hydration-report-metric strong{
+      display:block;
+      color:var(--primary);
+    }
+    .hydration-report-metric .hydration-status{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:var(--primary);
+      font-weight:700;
+      line-height:1.25;
+    }
+    .hydration-report-metric .hydration-status-dot{
+      width:12px;
+      height:12px;
+    }
+    .chart-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;margin-top:8px;font-size:.76rem}
+    .chart-legend span{display:flex;align-items:flex-start;gap:6px;line-height:1.2}
+    .legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto;margin-top:2px}
+    .somato-layout{grid-template-columns:1fr;align-items:start}
+    .somato-main-card{width:100%}
+    .somato-main-card canvas{width:100%;max-height:680px}
+    .somato-bottom-panel{
+      display:grid;
+      grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr);
+      align-items:start;
+      gap:18px;
+      margin-top:10px;
+      padding:14px;
+    }
+    .somato-bottom-composition,.somato-bottom-legend{min-width:0}
+    .somato-bottom-legend{border-left:1px solid var(--border);padding-left:18px}
+    .somato-side-panel{display:flex;flex-direction:column;padding:14px}
+    .composition-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px}
+    .composition-heading h3{margin:0;font-size:1rem}
+    .composition-total{font-size:.75rem;color:var(--muted);white-space:nowrap}
+    .composition-list{display:grid;gap:7px}
+    .composition-row{
+      display:grid;
+      grid-template-columns:92px minmax(0,1fr) 68px;
+      align-items:center;
+      gap:8px;
+      width:100%;
+      font-size:.78rem;
+    }
+    .composition-label{font-weight:700;color:#334155}
+    .composition-bar{
+      width:100%;
+      min-width:0;
+      height:7px;
+      border-radius:999px;
+      background:#e2e8f0;
+      overflow:hidden;
+    }
+    .composition-bar span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+      background:var(--composition-color);
+      min-width:2px;
+    }
+    .composition-value{
+      width:68px;
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+      color:#475569;
+    }
+    .composition-value strong{color:var(--primary);font-size:.86rem}
+    .somato-legend-panel{border-top:1px solid var(--border);margin-top:11px;padding-top:10px}
+    .somato-legend-panel h3{margin:0;font-size:.9rem}
+
+
+    .hydration-preview{display:grid;grid-template-columns:1fr;gap:9px;margin-top:12px}
+    .hydration-preview-box{padding:10px;border:1px solid var(--border);border-radius:12px;background:#f8fafc}
+    .hydration-preview-box strong{display:block;color:var(--primary)}
+    .hydration-cell{font-size:inherit;line-height:inherit;font-weight:400}
+    .hydration-status{display:inline-flex;align-items:center;gap:5px;font-weight:400;line-height:inherit}
+    .hydration-status-dot{width:13px;height:13px;display:inline-block;flex:0 0 auto}
+    .hydration-preview-result{display:flex;align-items:center;gap:9px;margin-top:4px}
+    .hydration-preview-result .hydration-status-dot{width:18px;height:18px}
+    @media screen and (max-width:800px){
+      .hydration-preview{grid-template-columns:1fr}
+    }
+
+    .project-summary-table{
+      table-layout:fixed;
+      width:100%;
+      min-width:0;
+    }
+    .project-summary-table th,
+    .project-summary-table td{
+      vertical-align:top;
+      overflow-wrap:anywhere;
+      word-break:normal;
+      hyphens:auto;
+    }
+    .project-summary-table .col-participant{width:18%}
+    .project-summary-table .col-age{width:7%}
+    .project-summary-table .col-weight{width:7%}
+    .project-summary-table .col-height{width:7%}
+    .project-summary-table .col-bmi{width:6%}
+    .project-summary-table .col-height-class{width:11%}
+    .project-summary-table .col-bmi-class{width:12%}
+    .project-summary-table .col-hydration{width:14%}
+    .project-summary-table .col-somatotype{width:18%}
+
+    .participant-summary-table .col-date{width:11%}
+    .participant-summary-table .col-age{width:8%}
+    .participant-summary-table .col-weight{width:8%}
+    .participant-summary-table .col-height{width:8%}
+    .participant-summary-table .col-bmi{width:7%}
+    .participant-summary-table .col-height-class{width:12%}
+    .participant-summary-table .col-bmi-class{width:13%}
+    .participant-summary-table .col-hydration{width:15%}
+    .participant-summary-table .col-somatotype{width:18%}
+    .participant-summary-table td:first-child{
+      text-align:center;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+    }
+
+    .summary-table-section{
+      padding:18px;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:var(--card);
+      box-shadow:var(--shadow);
+    }
+    .summary-table-section h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+    }
+    .summary-table-section .table-wrap{
+      width:100%;
+      max-width:100%;
+      overflow-x:hidden;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+    }
+    .summary-table-section .project-summary-table{
+      width:100%;
+      min-width:0;
+      border-collapse:collapse;
+    }
+    .summary-table-section .project-summary-table th,
+    .summary-table-section .project-summary-table td{
+      border-bottom:1px solid var(--border);
+    }
+    .summary-table-section .project-summary-table tbody tr:last-child td{
+      border-bottom:0;
+    }
+
+    .project-summary-table td:nth-child(2),
+    .project-summary-table td:nth-child(3),
+    .project-summary-table td:nth-child(4),
+    .project-summary-table td:nth-child(5),
+    .project-summary-table td:nth-child(9){text-align:center}
+    .print-summary-section .table-wrap{
+      width:100%;
+      max-width:100%;
+      overflow-x:hidden;
+    }
+    .project-summary-table th{
+      font-size:.74rem;
+      line-height:1.15;
+      padding:8px 6px;
+      white-space:normal;
+    }
+    .project-summary-table td{
+      font-size:.76rem;
+      line-height:1.2;
+      padding:8px 6px;
+    }
+    .project-summary-table .hydration-status{
+      display:flex;
+      align-items:flex-start;
+      white-space:normal;
+    }
+    .evaluation-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .print-only{display:none}
+    .project-continuous{display:block}
+    .participant-detail{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:14px;break-inside:avoid}
+    .participant-detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:12px}
+    .participant-evaluation{border:1px solid #e2e8f0;border-radius:13px;padding:12px;margin-top:10px;background:#f8fafc;break-inside:avoid}
+    .participant-evaluation h4{margin:0 0 8px}
+    .project-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .project-stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .project-header-badges{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+    .participant-view-content{display:block}
+    .participant-profile-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .participant-history-evaluation{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-top:12px;background:#fff}
+    .participant-history-evaluation h3{margin:0 0 9px}
+    .participant-chart-section{align-items:start}
+    .participant-somato-main{width:100%}
+    .participant-somato-main canvas{width:100%;max-height:680px}
+    .participant-legend-panel{
+      margin-top:10px;
+      padding:14px;
+    }
+    .participant-chart-legend{
+      grid-template-columns:repeat(4,minmax(0,1fr));
+    }
+    .project-empty{padding:36px;text-align:center;color:var(--muted)}
+    @media screen and (max-width:800px){
+      .report-summary,.report-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .report-header{display:block}
+      .project-title,.participant-profile-title{display:block}
+      .project-header-badges{justify-content:flex-start;margin-top:8px}
+      .somato-layout{grid-template-columns:1fr}
+      .composition-row{grid-template-columns:82px minmax(50px,1fr) auto}
+      .chart-legend{grid-template-columns:1fr}
+    }
+
+    @media screen and (max-width:800px){
+      html{scroll-padding-bottom:92px}
+      body{
+        overflow-x:hidden;
+        -webkit-text-size-adjust:100%;
+        padding-bottom:env(safe-area-inset-bottom);
+      }
+      .app{
+        width:100%;
+        max-width:none;
+        padding:8px 8px calc(96px + env(safe-area-inset-bottom));
+      }
+
+      /* Encabezado más compacto */
+      header{
+        margin-bottom:10px;
+        padding:16px 15px;
+        border-radius:17px;
+      }
+      header h1{
+        font-size:1.35rem;
+        line-height:1.16;
+      }
+      header p{font-size:.84rem}
+      .privacy{
+        margin-top:9px;
+        padding:8px 9px;
+        font-size:.76rem;
+        line-height:1.35;
+      }
+
+      /* Navegación inferior para uso con el pulgar */
+      .tabs{
+        position:fixed;
+        z-index:100;
+        top:auto;
+        bottom:0;
+        left:0;
+        right:0;
+        display:flex;
+        gap:6px;
+        width:100%;
+        margin:0;
+        padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+        overflow-x:auto;
+        overscroll-behavior-x:contain;
+        scroll-behavior:smooth;
+        scroll-snap-type:x proximity;
+        background:rgba(255,255,255,.97);
+        border-top:1px solid var(--border);
+        box-shadow:0 -8px 24px rgba(15,23,42,.12);
+        backdrop-filter:blur(14px);
+        -webkit-backdrop-filter:blur(14px);
+        scrollbar-width:none;
+      }
+      .tabs::-webkit-scrollbar{display:none}
+      .tab-btn{
+        flex:0 0 auto;
+        min-width:84px;
+        min-height:45px;
+        padding:8px 10px;
+        border-radius:12px;
+        font-size:.72rem;
+        line-height:1.12;
+        white-space:normal;
+        text-align:center;
+        scroll-snap-align:center;
+        touch-action:manipulation;
+      }
+
+      /* Controles táctiles */
+      button,.btn,input,select,textarea{touch-action:manipulation}
+      input,select,textarea{
+        min-height:46px;
+        padding:11px 12px;
+        border-radius:11px;
+        font-size:16px;
+      }
+      textarea{min-height:96px}
+      .btn{
+        min-height:44px;
+        padding:10px 13px;
+      }
+      .actions{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
+      }
+      .actions .btn{width:100%}
+      .actions .btn:only-child{grid-column:1/-1}
+      .field{margin-bottom:10px}
+      label{font-size:.84rem}
+
+      /* Estructura y tarjetas */
+      .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+      #project-stats{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
+      }
+      .card{
+        padding:13px;
+        border-radius:14px;
+        box-shadow:0 5px 18px rgba(15,23,42,.07);
+      }
+      .card h2{font-size:1.08rem}
+      .card h3{font-size:.98rem}
+      .stat{
+        min-width:0;
+        padding:11px;
+        border-radius:13px;
+      }
+      .stat strong{
+        font-size:1.35rem;
+        overflow-wrap:anywhere;
+      }
+      .stat span{
+        display:block;
+        font-size:.75rem;
+        line-height:1.25;
+      }
+      .project-title,.participant-profile-title{display:block}
+      .project-title>.btn{
+        width:100%;
+        margin-top:10px;
+      }
+      .project-header-badges{
+        justify-content:flex-start;
+        margin-top:8px;
+      }
+
+      /* Tabla del entrenador convertida en tarjetas */
+      .summary-table-section{
+        padding:13px;
+        border-radius:14px;
+      }
+      .summary-table-section .table-wrap{
+        overflow:visible;
+        width:100%;
+        max-width:100%;
+        border:0;
+        border-radius:0;
+        background:transparent;
+      }
+      .project-summary-table{
+        display:block;
+        width:100%;
+        min-width:0;
+      }
+      .project-summary-table thead{display:none}
+      .project-summary-table tbody{
+        display:grid;
+        gap:10px;
+      }
+      .project-summary-table tr{
+        display:block;
+        overflow:hidden;
+        border:1px solid var(--border);
+        border-radius:14px;
+        background:#fff;
+        box-shadow:0 4px 14px rgba(15,23,42,.05);
+      }
+      .project-summary-table td{
+        display:grid;
+        grid-template-columns:minmax(94px,38%) minmax(0,1fr);
+        align-items:center;
+        gap:8px;
+        width:100%;
+        padding:9px 11px;
+        border-bottom:1px solid #edf2f7;
+        text-align:left!important;
+        font-size:.82rem;
+        overflow-wrap:anywhere;
+      }
+      .project-summary-table td:last-child{border-bottom:0}
+      .project-summary-table td::before{
+        content:attr(data-label);
+        color:var(--muted);
+        font-size:.72rem;
+        font-weight:700;
+        line-height:1.2;
+      }
+      .project-summary-table td[data-label="Participante"],
+      .participant-summary-table td[data-label="Fecha"]{
+        display:block;
+        padding:12px;
+        background:linear-gradient(135deg,var(--primary-soft),#fff);
+        font-weight:800;
+        color:var(--primary-dark);
+      }
+      .project-summary-table td[data-label="Participante"]::before,
+      .participant-summary-table td[data-label="Fecha"]::before{display:none}
+      .project-summary-table td.empty{
+        display:block;
+        padding:24px 12px;
+        text-align:center!important;
+      }
+      .project-summary-table td.empty::before{display:none}
+      .project-summary-table .badge{
+        width:max-content;
+        max-width:100%;
+        white-space:normal;
+      }
+
+      /* Otras tablas: desplazamiento cómodo y primera columna fija */
+      .table-wrap{
+        max-width:100%;
+        overflow-x:auto;
+        overscroll-behavior-x:contain;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:thin;
+      }
+      .table-wrap table:not(.project-summary-table){
+        min-width:680px;
+      }
+      .table-wrap table:not(.project-summary-table) th:first-child,
+      .table-wrap table:not(.project-summary-table) td:first-child{
+        position:sticky;
+        left:0;
+        z-index:2;
+        background:#fff;
+        box-shadow:5px 0 8px rgba(15,23,42,.05);
+      }
+      .table-wrap table:not(.project-summary-table) th:first-child{
+        z-index:3;
+        background:#f1f5f9;
+      }
+      th,td{
+        padding:9px;
+        font-size:.8rem;
+      }
+
+      /* Gráficos y leyendas */
+      .somato-layout{grid-template-columns:1fr}
+      .somato-bottom-panel,
+      .participant-bottom-panel{
+        grid-template-columns:1fr;
+        gap:12px;
+        padding:12px;
+      }
+      .somato-bottom-legend{
+        border-left:0;
+        border-top:1px solid var(--border);
+        padding-left:0;
+        padding-top:11px;
+      }
+      .somato-side-panel{padding:12px}
+      canvas{
+        max-width:100%;
+        border-radius:12px;
+      }
+      .composition-row{
+        grid-template-columns:80px minmax(0,1fr) 60px;
+        gap:6px;
+        width:100%;
+        font-size:.73rem;
+      }
+      .composition-value{
+        width:60px;
+      }
+      .composition-heading{
+        align-items:center;
+        margin-bottom:8px;
+      }
+      .chart-legend,
+      .participant-chart-legend{
+        grid-template-columns:1fr;
+        max-height:220px;
+        overflow-y:auto;
+        padding-right:3px;
+      }
+      .participant-history-evaluation{
+        padding:12px;
+        border-radius:13px;
+      }
+      .report-metrics{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+      .report-metric{
+        min-width:0;
+        overflow-wrap:anywhere;
+      }
+      .hydration-report-metric .hydration-status{
+        align-items:flex-start;
+        font-size:inherit;
+      }
+      .result-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
+      }
+      .result{padding:10px}
+      .result .value{font-size:1.08rem}
+
+      /* Mensajes y bloques auxiliares */
+      .note,.success-box,.danger-box{
+        padding:10px;
+        font-size:.82rem;
+      }
+      .empty{padding:22px 10px}
+      .filebox{padding:15px}
+      .hydration-preview-box{padding:9px}
+    }
+
+    @media screen and (max-width:420px){
+      .app{padding-left:6px;padding-right:6px}
+      header{padding:14px 13px}
+      .card{padding:11px}
+      .actions{grid-template-columns:1fr}
+      #project-stats{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+      .project-summary-table td{
+        grid-template-columns:88px minmax(0,1fr);
+        padding:8px 9px;
+      }
+      .composition-row{
+        grid-template-columns:75px minmax(0,1fr) 58px;
+      }
+      .composition-value{
+        width:58px;
+      }
+      .tab-btn{min-width:80px}
+    }
+
+    @media screen and (orientation:landscape) and (max-height:520px){
+      .tabs{
+        padding-top:5px;
+        padding-bottom:calc(5px + env(safe-area-inset-bottom));
+      }
+      .tab-btn{
+        min-height:38px;
+        padding:6px 9px;
+      }
+      .app{padding-bottom:72px}
+    }
+
+
+    @media screen and (min-width:801px) and (max-width:1180px){
+      .app{width:min(100% - 16px,1180px)}
+      .print-summary-section{padding:12px}
+      .project-summary-table th{
+        font-size:.66rem;
+        padding:7px 4px;
+      }
+      .project-summary-table td{
+        font-size:.68rem;
+        padding:7px 4px;
+      }
+      .project-summary-table .badge{
+        padding:3px 5px;
+        font-size:.63rem;
+        white-space:normal;
+      }
+      .project-summary-table .hydration-status{
+        gap:3px;
+        font-size:.66rem;
+      }
+      .project-summary-table .hydration-status-dot{
+        width:9px;
+        height:9px;
+        margin-top:1px;
+      }
+      .project-summary-table td:first-child .small{
+        font-size:.64rem;
+      }
+    }
+
+
+    /* V5.21 · Ajuste integral de anchos para pantallas móviles */
+    @media screen and (max-width:800px){
+      html,
+      body{
+        width:100%;
+        max-width:100%;
+        overflow-x:hidden;
+      }
+
+      .app,
+      .tab,
+      .tab.active,
+      header,
+      main,
+      section,
+      form,
+      details,
+      .card,
+      .grid,
+      .field,
+      .report-page,
+      .report-evaluation,
+      .summary-table-section,
+      .participant-chart-section,
+      .participant-history-section,
+      .somato-main-card,
+      .participant-somato-main,
+      .somato-bottom-panel,
+      .participant-bottom-panel,
+      .participant-legend-panel,
+      .somato-side-panel,
+      .filebox{
+        width:100%;
+        max-width:100%;
+        min-width:0;
+      }
+
+      .grid > *,
+      .actions > *,
+      .result-grid > *,
+      .report-summary > *,
+      .report-metrics > *,
+      .somato-bottom-panel > *,
+      .participant-bottom-panel > *{
+        min-width:0;
+        max-width:100%;
+      }
+
+      input,
+      select,
+      textarea,
+      button,
+      .btn{
+        max-width:100%;
+        min-width:0;
+      }
+
+      input[type="file"]{
+        width:100%;
+        max-width:100%;
+        padding:9px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+
+      header h1,
+      header p,
+      .card h2,
+      .card h3,
+      .project-title h2,
+      .participant-profile-title h2,
+      summary,
+      label,
+      .badge{
+        max-width:100%;
+        overflow-wrap:anywhere;
+        word-break:normal;
+      }
+
+      .project-header-badges,
+      .somato-legend,
+      .actions{
+        width:100%;
+        max-width:100%;
+      }
+
+      .project-header-badges .badge{
+        max-width:100%;
+        white-space:normal;
+      }
+
+      .summary-table-section .project-summary-table,
+      .summary-table-section .participant-summary-table,
+      .summary-table-section tbody,
+      .summary-table-section tr,
+      .summary-table-section td{
+        max-width:100%;
+      }
+
+      .summary-table-section tr{
+        width:100%;
+      }
+
+      .summary-table-section td > *{
+        max-width:100%;
+        min-width:0;
+      }
+
+      .table-wrap{
+        width:100%;
+        max-width:100%;
+      }
+
+      .table-wrap table:not(.project-summary-table){
+        width:max-content;
+        min-width:620px;
+        max-width:none;
+      }
+
+      canvas,
+      svg,
+      img{
+        max-width:100%;
+      }
+
+      .somato-main-card canvas,
+      .participant-somato-main canvas{
+        display:block;
+        width:100%!important;
+        max-width:100%!important;
+        height:auto!important;
+      }
+
+      .composition-list,
+      .composition-row,
+      .composition-bar{
+        max-width:100%;
+        min-width:0;
+      }
+
+      .chart-legend span,
+      .participant-chart-legend span{
+        min-width:0;
+        max-width:100%;
+        overflow-wrap:anywhere;
+      }
+
+      .report-header > *,
+      .participant-profile-title > *,
+      .project-title > *{
+        max-width:100%;
+        min-width:0;
+      }
+    }
+
+    @media screen and (max-width:480px){
+      .app{
+        padding-left:6px;
+        padding-right:6px;
+      }
+
+      header,
+      .card,
+      .summary-table-section,
+      .report-page{
+        border-radius:13px;
+      }
+
+      .actions{
+        grid-template-columns:1fr;
+      }
+
+      .project-summary-table td{
+        grid-template-columns:minmax(82px,36%) minmax(0,1fr);
+      }
+
+      .table-wrap table:not(.project-summary-table){
+        min-width:580px;
+      }
+    }
+
+    @media screen and (max-width:360px){
+      #project-stats,
+      .result-grid,
+      .report-summary,
+      .report-metrics{
+        grid-template-columns:1fr;
+      }
+
+      .project-summary-table td{
+        grid-template-columns:minmax(76px,34%) minmax(0,1fr);
+        gap:6px;
+        padding:8px;
+      }
+
+      .composition-row{
+        grid-template-columns:70px minmax(0,1fr) 54px;
+        gap:5px;
+      }
+
+      .composition-value{
+        width:54px;
+      }
+
+      .tab-btn{
+        min-width:74px;
+        padding-left:7px;
+        padding-right:7px;
+      }
+    }
+
+    @media print{
+      @page{size:A4 landscape;margin:8mm}
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      body{background:#fff}
+      .screen-only{display:none!important}
+      .print-only{display:inline!important}
+      .tabs,header,.no-print,.tab{display:none!important}
+      body.print-project #tab-visualizacion{display:block!important}
+      body.print-visualization #tab-visualizacion{display:block!important}
+      body.print-participant #tab-participante{display:block!important}
+      .app{max-width:none;padding:0}
+      .card,.report-page{box-shadow:none}
+      .report-page{border:0;padding:0}
+      .report-evaluation{break-inside:avoid}
+      body.print-project .print-summary-section,
+      body.print-project .print-details-section{break-inside:auto!important}
+      body.print-project .print-chart-section{break-inside:avoid-page}
+      canvas{max-height:150mm;width:100%!important;height:auto!important}
+      body.print-project .table-wrap{overflow:visible}
+      body.print-project .project-summary-table{min-width:0!important;width:100%!important;table-layout:fixed!important}
+      body.print-project .project-summary-table th,
+      body.print-project .project-summary-table td{
+        font-size:7.6pt;
+        line-height:1.2;
+        padding:4px 4px;
+        overflow-wrap:anywhere;
+        word-break:normal;
+        hyphens:auto;
+      }
+      body.print-project .project-summary-table th{
+        font-size:7.25pt;
+        font-weight:700;
+      }
+      body.print-project .project-summary-table .badge{
+        display:inline;
+        padding:0;
+        background:transparent!important;
+        color:#111!important;
+        font-size:7.5pt;
+        font-weight:600;
+      }
+      body.print-project .project-summary-table .small{font-size:7pt}
+      body.print-project .project-summary-table .muted{color:#444}
+      body.print-project .project-summary-table .hydration-cell,
+      body.print-project .project-summary-table .hydration-status{
+        font-size:7.6pt;
+        font-weight:400;
+        line-height:1.2;
+      }
+      body.print-project .project-summary-table .hydration-status-dot{
+        width:10px;
+        height:10px;
+      }
+      body.print-project .hydration-report-metric .hydration-status,
+      body.print-participant .hydration-report-metric .hydration-status{
+        color:#0f766e;
+        font-weight:700;
+      }
+      body.print-project .hydration-report-metric .hydration-status-dot,
+      body.print-participant .hydration-report-metric .hydration-status-dot{
+        width:9px;
+        height:9px;
+      }
+      body.print-project #project-stats{display:none!important}
+      body.print-project .print-summary-section{padding:8px}
+      body.print-project .print-summary-section h2{font-size:14pt;margin-bottom:4px}
+      body.print-project .print-summary-section p{margin:0 0 5px}
+      body.print-project .print-chart-section{
+        break-before:page;
+        page-break-before:always;
+        display:block!important;
+        break-inside:avoid-page;
+        page-break-inside:avoid;
+      }
+      body.print-project .print-chart-section .card{
+        padding:5px;
+        border:0;
+      }
+      body.print-project .somato-main-card canvas{
+        width:100%!important;
+        max-height:142mm!important;
+      }
+      body.print-project .somato-bottom-panel{
+        display:grid!important;
+        grid-template-columns:minmax(55mm,.8fr) minmax(0,1.2fr)!important;
+        gap:5mm!important;
+        margin-top:2mm;
+        padding:4px!important;
+        align-items:start;
+      }
+      body.print-project .somato-bottom-legend{
+        border-left:1px solid #cbd5e1;
+        padding-left:5mm;
+      }
+      body.print-project .composition-heading{margin-bottom:4px}
+      body.print-project .composition-heading h3{font-size:9pt}
+      body.print-project .composition-total{font-size:6.3pt}
+      body.print-project .composition-list{gap:3px}
+      body.print-project .composition-row{
+        grid-template-columns:22mm minmax(0,1fr) 18mm;
+        gap:4px;
+        width:100%;
+        font-size:6.3pt;
+      }
+      body.print-project .composition-value{
+        width:18mm;
+        text-align:right;
+      }
+      body.print-project .composition-bar{height:4px}
+      body.print-project .composition-value strong{font-size:6.8pt}
+      body.print-project .chart-legend{
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:2px 4px;
+        font-size:6.2pt;
+        margin-top:4px;
+      }
+      body.print-project .legend-dot{width:5px;height:5px}
+      body.print-project .print-details-section{
+        break-before:page;
+        page-break-before:always;
+        break-inside:auto!important;
+        border:0;
+        padding:0;
+        box-shadow:none;
+      }
+      body.print-project .individual-evaluations-title{
+        margin-top:0;
+        padding-top:0;
+        break-after:avoid-page;
+        page-break-after:avoid;
+      }
+      body.print-project .participant-detail{
+        break-before:auto;
+        page-break-before:auto;
+        break-inside:auto;
+        border:0;
+        padding:0;
+        box-shadow:none;
+      }
+      body.print-project #project-participant-details .participant-detail + .participant-detail{
+        break-before:page;
+        page-break-before:always;
+      }
+      body.print-project .participant-evaluation{
+        background:#fff;
+        break-inside:avoid-page;
+        page-break-inside:avoid;
+      }
+      body.print-project #project-header-summary{border:0;padding:0;margin-bottom:4px}
+      body.print-project .print-summary-section{margin-top:0!important}
+
+      body.print-participant #participant-view-header{border:0;padding:0;margin-bottom:4px}
+
+      body.print-project .summary-table-section,
+      body.print-participant .summary-table-section{
+        margin-top:0!important;
+        padding:8px;
+        border:1px solid var(--border);
+        border-radius:var(--radius);
+        background:#fff;
+        box-shadow:none;
+        break-inside:auto;
+      }
+      body.print-project .summary-table-section h2,
+      body.print-participant .summary-table-section h2{
+        font-size:14pt;
+        margin:0 0 4px;
+      }
+      body.print-project .summary-table-section .table-wrap,
+      body.print-participant .summary-table-section .table-wrap{
+        overflow:visible;
+        width:100%;
+        max-width:100%;
+        border:1px solid #cbd5e1;
+        border-radius:14px;
+        background:#fff;
+      }
+      body.print-participant .participant-summary-table{
+        min-width:0!important;
+        width:100%!important;
+        table-layout:fixed!important;
+      }
+      body.print-participant .participant-summary-table thead{
+        display:table-header-group;
+      }
+      body.print-participant .participant-summary-table tr{
+        break-inside:avoid;
+        page-break-inside:avoid;
+      }
+      body.print-participant .participant-summary-table th,
+      body.print-participant .participant-summary-table td{
+        font-size:7.6pt;
+        line-height:1.2;
+        padding:4px;
+        overflow-wrap:anywhere;
+        word-break:normal;
+        hyphens:auto;
+      }
+      body.print-participant .participant-summary-table th{
+        font-size:7.25pt;
+        font-weight:700;
+      }
+      body.print-participant .participant-summary-table .badge{
+        display:inline;
+        padding:0;
+        background:transparent!important;
+        color:#111!important;
+        font-size:7.5pt;
+        font-weight:600;
+      }
+      body.print-participant .participant-summary-table .hydration-cell,
+      body.print-participant .participant-summary-table .hydration-status{
+        font-size:7.6pt;
+        font-weight:400;
+        line-height:1.2;
+      }
+      body.print-participant .participant-summary-table .hydration-status-dot{
+        width:10px;
+        height:10px;
+      }
+      body.print-participant .participant-chart-section{
+        break-before:page;
+        page-break-before:always;
+        display:block!important;
+        break-inside:avoid-page;
+        page-break-inside:avoid;
+      }
+      body.print-participant .participant-chart-section .card{border:0;padding:5px}
+      body.print-participant .participant-somato-main canvas{
+        width:100%!important;
+        max-height:142mm!important;
+      }
+      body.print-participant .participant-legend-panel{
+        margin-top:2mm;
+        padding:4px!important;
+        border:0;
+      }
+      body.print-participant .participant-chart-legend{
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:2px 4px;
+        font-size:6.2pt;
+        margin-top:4px;
+      }
+      body.print-participant .participant-history-section{
+        break-before:page;page-break-before:always;border:0;padding:0;box-shadow:none;
+      }
+      body.print-participant .participant-history-evaluation{
+        break-inside:avoid-page;page-break-inside:avoid;border:0;padding:0;margin-top:12px;
+      }
+      body.print-participant .participant-history-evaluation + .participant-history-evaluation{
+        break-before:page;page-break-before:always;
+      }
+    }
+  </style>
+  <!-- Excel: funciona al estar conectado a internet. El respaldo JSON funciona siempre. -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>ESTUDIO ANTROPOMÉTRICO</h1>
+    <p>Análisis del crecimiento - desarrollo y el Somatotipo</p>
+    
+  </header>
+
+  <nav class="tabs no-print">
+    <button class="tab-btn active" data-tab="inicio">Inicio</button>
+    <button class="tab-btn" data-tab="proyectos">Proyectos</button>
+    <button class="tab-btn" data-tab="pacientes">Participantes</button>
+    <button class="tab-btn" data-tab="evaluacion">Nueva evaluación</button>
+    <button class="tab-btn" data-tab="visualizacion">Vista entrenador</button>
+    <button class="tab-btn" data-tab="participante">Vista participante</button>
+    <button class="tab-btn" data-tab="datos">Excel</button>
+  </nav>
+
+  <section id="tab-inicio" class="tab active">
+    <div class="grid grid-4" id="stats"></div>
+    <div class="grid grid-2" style="margin-top:14px">
+      <div class="card">
+        <h2>Uso rápido</h2>
+        <ol>
+          <li>Crea una academia, equipo o proyecto.</li>
+          <li>Registra a los participantes.</li>
+          <li>Ingresa las evaluaciones asignándolas al proyecto.</li>
+          <li>Consulta el resumen y la somatocarta por proyecto.</li>
+          <li>Descarga el Excel completo al finalizar.</li>
+        </ol>
+        <div class="actions">
+          <button class="btn" onclick="goTab('proyectos')">Crear proyecto</button>
+          <button class="btn secondary" onclick="goTab('evaluacion')">Nueva evaluación</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Almacenamiento local</h2>
+        <p>La aplicación puede abrirse como archivo HTML o publicarse como sitio estático. Los datos se guardan localmente en el navegador del dispositivo.</p>
+        <div class="note">Para información clínica real, usa bloqueo del dispositivo, evita equipos compartidos y conserva respaldos cifrados en un lugar seguro.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="tab-proyectos" class="tab">
+    <div class="grid grid-2">
+      <form id="project-form" class="card">
+        <h2 id="project-form-title">Crear proyecto</h2>
+        <input type="hidden" id="project-id">
+        <div class="field"><label class="required">Nombre del proyecto</label><input id="project-name" required placeholder="Ej.: Academia Norte – Sub 15"></div>
+        <div class="grid grid-2">
+          <div class="field"><label>Academia / institución</label><input id="project-academy" placeholder="Ej.: Academia Vitae"></div>
+          <div class="field"><label>Disciplina</label><input id="project-discipline" placeholder="Ej.: fútbol, vóley, natación"></div>
+        </div>
+        <div class="field"><label>Grupo, categoría o temporada</label><input id="project-group" placeholder="Ej.: Sub 15 · Temporada 2026"></div>
+        <div class="field"><label>Descripción</label><textarea id="project-description" rows="3" placeholder="Información adicional del proyecto"></textarea></div>
+        <div class="actions">
+          <button class="btn" type="submit">Guardar proyecto</button>
+          <button class="btn light" type="button" onclick="resetProjectForm()">Limpiar</button>
+        </div>
+      </form>
+      <div class="card">
+        <h2>Listado de proyectos</h2>
+        <div class="field"><input id="project-search" placeholder="Buscar proyecto o academia..." oninput="renderProjects()"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Proyecto</th><th>Participantes</th><th>Evaluaciones</th><th>Acciones</th></tr></thead>
+            <tbody id="projects-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-pacientes" class="tab">
+    <div class="grid grid-2">
+      <form id="patient-form" class="card">
+        <h2 id="patient-form-title">Registrar participante</h2>
+        <input type="hidden" id="patient-id">
+        <div class="field"><label class="required">Proyecto</label><select id="patient-project" required></select></div>
+        <div class="field"><label class="required">Nombre completo</label><input id="patient-name" required autocomplete="name"></div>
+        <div class="grid grid-2">
+          <div class="field"><label class="required">Fecha de nacimiento</label><input id="patient-dob" type="date" required></div>
+          <div class="field"><label class="required">Sexo para referencia OMS</label><select id="patient-sex" required><option value="">Seleccione</option><option>Femenino</option><option>Masculino</option></select></div>
+        </div>
+        <div class="field"><label>Actividad física / deporte</label><input id="patient-activity" placeholder="Ej.: fútbol, natación, gimnasio"></div>
+        <div class="field"><label>Nivel de actividad</label><select id="patient-level"><option value="">Seleccione</option><option>Sedentaria</option><option>Ligera</option><option>Moderada</option><option>Intensa</option><option>Deportista/competitiva</option></select></div>
+        <div class="actions">
+          <button class="btn" type="submit">Guardar participante</button>
+          <button class="btn light" type="button" onclick="resetPatientForm()">Limpiar</button>
+        </div>
+      </form>
+      <div class="card">
+        <h2>Listado de participantes</h2>
+        <div class="grid grid-2">
+          <div class="field"><label>Proyecto</label><select id="patient-list-project" onchange="renderPatients()"><option value="all">Todos los proyectos</option></select></div>
+          <div class="field"><label>Buscar por nombre</label><input id="patient-search" placeholder="Nombre del participante..." oninput="renderPatients()"></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Participante</th><th>Proyecto</th><th>Nacimiento</th><th>Sexo</th><th>Evaluaciones</th><th>Acciones</th></tr></thead><tbody id="patients-body"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-evaluacion" class="tab">
+    <form id="evaluation-form">
+      <div class="card">
+        <h2 id="evaluation-form-title">Nueva evaluación</h2>
+        <input type="hidden" id="evaluation-id">
+        <div id="evaluation-edit-note" class="success-box hidden" style="margin-bottom:12px">Estás modificando una evaluación existente.</div>
+        <div class="grid grid-4">
+          <div class="field"><label class="required">Proyecto</label><select id="eval-project" required onchange="updateEvaluationPatientOptions()"></select></div>
+          <div class="field"><label class="required">Participante</label><select id="eval-patient" required></select></div>
+          <div class="field"><label class="required">Fecha de evaluación</label><input id="eval-date" type="date" required></div>
+          <div class="field"><label class="required">Tipo de medición</label><select id="measurement-type" required><option>Talla de pie</option><option>Longitud acostado</option></select></div>
+        </div>
+      </div>
+      <div class="grid grid-2" style="margin-top:14px">
+        <div class="card">
+          <h3>Mediciones principales</h3>
+          <div class="grid grid-2">
+            <div class="field"><label class="required">Peso (kg)</label><input id="weight" type="number" step="0.01" min="0" required></div>
+            <div class="field"><label class="required">Talla medida (cm)</label><input id="height" type="number" step="0.1" min="0" required></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Pliegues cutáneos (mm)</h3>
+          <div class="grid grid-2">
+            <div class="field"><label>Tríceps</label><input id="triceps" type="number" step="0.1" min="0"></div>
+            <div class="field"><label>Subescapular</label><input id="subscapular" type="number" step="0.1" min="0"></div>
+            <div class="field"><label>Supraespinal</label><input id="supraspinal" type="number" step="0.1" min="0"></div>
+            <div class="field"><label>Pierna medial</label><input id="medial-calf" type="number" step="0.1" min="0"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Diámetros óseos (cm)</h3>
+          <div class="grid grid-2">
+            <div class="field"><label>Húmero</label><input id="humerus" type="number" step="0.01" min="0"></div>
+            <div class="field"><label>Fémur</label><input id="femur" type="number" step="0.01" min="0"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Perímetros (cm)</h3>
+          <div class="grid grid-2">
+            <div class="field"><label>Brazo flexionado</label><input id="arm" type="number" step="0.1" min="0"></div>
+            <div class="field"><label>Pantorrilla</label><input id="calf" type="number" step="0.1" min="0"></div>
+          </div>
+          <p class="small muted">Para calcular el somatotipo completo se requieren todos los pliegues, diámetros y perímetros.</p>
+        </div>
+        <div class="card">
+          <h3>Test de hidratación</h3>
+          <div class="field">
+            <label>Gravedad específica de orina</label>
+            <input id="urine-specific-gravity" type="number" step="0.001" min="1.010" max="1.060" placeholder="Ej.: 1.018" oninput="updateHydrationPreview()">
+          </div>
+          <p class="small muted">Clasificación configurada: 1.010–1.020 euhidratado; 1.021–1.030 hipohidratado; mayor a 1.030 deshidratación severa.</p>
+          <div class="hydration-preview">
+            <div class="hydration-preview-box">
+              <span class="small muted">Resultado automático</span>
+              <div id="usg-hydration-preview" class="hydration-preview-result">No registrado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="field"><label>Observaciones</label><textarea id="notes" rows="3"></textarea></div>
+        <div class="actions">
+          <button id="evaluation-submit-button" class="btn" type="submit">Calcular y guardar</button>
+          <button class="btn light" type="button" onclick="resetEvaluationForm()">Limpiar</button>
+          <button id="evaluation-cancel-edit" class="btn warning hidden" type="button" onclick="resetEvaluationForm()">Cancelar edición</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section id="tab-visualizacion" class="tab">
+    <div class="card no-print">
+      <div class="project-title">
+        <div>
+          <h2 style="margin-bottom:4px">Vista para el entrenador</h2>
+          <p class="muted" style="margin:0">Ficha grupal de una jornada de evaluación para presentar al entrenador.</p>
+        </div>
+        <button class="btn secondary" onclick="printProjectView()">Imprimir ficha del entrenador</button>
+      </div>
+      <div class="grid grid-2" style="margin-top:14px">
+        <div class="field">
+          <label class="required">Proyecto</label>
+          <select id="view-project" onchange="renderProjectView()"></select>
+        </div>
+        <div class="field">
+          <label class="required">Fecha de evaluación</label>
+          <select id="project-date-filter" onchange="renderProjectView()">
+            <option value="">Sin fechas disponibles</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-continuous" style="margin-top:14px">
+      <div id="project-header-summary" class="card"></div>
+      <div id="project-stats" class="grid project-stats-grid" style="margin-top:14px"></div>
+
+      <div class="card print-summary-section summary-table-section" style="margin-top:14px">
+        <h2>1. Resumen de participantes</h2>
+        <div class="table-wrap">
+          <table class="project-summary-table">
+            <colgroup>
+              <col class="col-participant">
+              <col class="col-age">
+              <col class="col-weight">
+              <col class="col-height">
+              <col class="col-bmi">
+              <col class="col-height-class">
+              <col class="col-bmi-class">
+              <col class="col-hydration">
+              <col class="col-somatotype">
+            </colgroup>
+            <thead><tr>
+              <th>Participante</th><th>Edad</th><th>Peso</th><th>Talla</th>
+              <th>IMC</th><th>Talla/edad</th><th>IMC/edad</th><th>Hidratación</th><th>Somatotipo</th>
+            </tr></thead>
+            <tbody id="project-summary-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="print-chart-section" style="margin-top:14px">
+        <div class="card somato-main-card">
+          <h2>2. Somatocarta</h2>
+          <canvas id="project-somato-canvas" width="1100" height="680"></canvas>
+        </div>
+        <div class="card somato-bottom-panel">
+          <div class="somato-bottom-composition">
+            <div class="composition-heading">
+              <h3>Composición del grupo</h3>
+              <span id="project-composition-total" class="composition-total"></span>
+            </div>
+            <div id="project-type-summary" class="composition-list"></div>
+          </div>
+          <div class="somato-bottom-legend">
+            <div class="composition-heading">
+              <h3>Participantes</h3>
+            </div>
+            <div id="project-chart-legend" class="chart-legend"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card print-details-section" style="margin-top:14px">
+        <h2 class="individual-evaluations-title">3. Evaluaciones individuales</h2>
+        <p class="small muted">Evaluaciones individuales correspondientes a la fecha seleccionada.</p>
+        <div id="project-participant-details"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-participante" class="tab">
+    <div class="card no-print">
+      <div class="project-title">
+        <div>
+          <h2 style="margin-bottom:4px">Vista para el participante</h2>
+          <p class="muted" style="margin:0">Ficha individual con la última evaluación o con todo su historial.</p>
+        </div>
+        <button class="btn secondary" onclick="printParticipantView()">Imprimir ficha del participante</button>
+      </div>
+      <div class="grid grid-3" style="margin-top:14px">
+        <div class="field"><label class="required">Proyecto</label><select id="participant-view-project" onchange="updateParticipantViewOptions();renderParticipantView()"></select></div>
+        <div class="field"><label class="required">Participante</label><select id="participant-view-person" onchange="renderParticipantView()"></select></div>
+        <div class="field"><label>Evaluaciones a mostrar</label><select id="participant-view-mode" onchange="renderParticipantView()"><option value="latest">Última evaluación</option><option value="all">Todas las fechas</option></select></div>
+      </div>
+    </div>
+
+    <div id="participant-view-content" class="participant-view-content" style="margin-top:14px">
+      <div id="participant-view-header" class="card"></div>
+
+      <div class="card print-summary-section summary-table-section participant-summary-section" style="margin-top:14px">
+        <h2>1. Resumen de evaluaciones</h2>
+        <div class="table-wrap">
+          <table class="project-summary-table participant-summary-table">
+            <colgroup>
+              <col class="col-date">
+              <col class="col-age">
+              <col class="col-weight">
+              <col class="col-height">
+              <col class="col-bmi">
+              <col class="col-height-class">
+              <col class="col-bmi-class">
+              <col class="col-hydration">
+              <col class="col-somatotype">
+            </colgroup>
+            <thead><tr>
+              <th>Fecha</th><th>Edad</th><th>Peso</th><th>Talla</th>
+              <th>IMC</th><th>Talla/edad</th><th>IMC/edad</th><th>Hidratación</th><th>Somatotipo</th>
+            </tr></thead>
+            <tbody id="participant-summary-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="participant-chart-section" style="margin-top:14px">
+        <div class="card somato-main-card participant-somato-main">
+          <h2>2. Somatocarta individual</h2>
+          <canvas id="participant-somato-canvas" width="1100" height="680"></canvas>
+        </div>
+        <div class="card participant-legend-panel">
+          <div class="composition-heading">
+            <h3>Fechas representadas</h3>
+          </div>
+          <div id="participant-chart-legend" class="chart-legend participant-chart-legend"></div>
+        </div>
+      </div>
+      <div class="card participant-history-section" style="margin-top:14px">
+        <h2>3. Historial de evaluaciones</h2>
+        <div id="participant-view-evaluations"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-datos" class="tab">
+    <div class="grid grid-3">
+      <div class="card">
+        <h2>Excel completo</h2>
+        <p>Descarga pacientes, mediciones y todos los resultados calculados: edad, IMC, indicadores OMS, somatotipo y coordenadas.</p>
+        <div class="actions">
+          <button class="btn secondary" onclick="exportExcel()">Descargar Excel completo</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Plantilla para ingresar datos</h2>
+        <p>Contiene únicamente campos de identificación y mediciones. No debes calcular ni completar resultados.</p>
+        <div class="actions">
+          <button class="btn success" onclick="exportInputTemplate()">Descargar plantilla de ingreso</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Importar Excel de ingreso</h2>
+        <p>La aplicación leerá los datos capturados y calculará automáticamente todos los indicadores.</p>
+        <div class="actions">
+          <label class="btn light" style="display:inline-block">Seleccionar Excel
+            <input id="excel-file" type="file" accept=".xlsx,.xls" hidden onchange="importExcel(this.files[0])">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Hojas requeridas para importar</h2>
+      <p><strong>Proyectos:</strong> ID_proyecto, Proyecto, Academia, Disciplina, Grupo_temporada y Descripcion.</p>
+      <p><strong>Pacientes:</strong> ID_proyecto, ID_paciente, Nombre, Fecha_nacimiento, Sexo, Actividad y Nivel_actividad.</p>
+      <p><strong>Evaluaciones_Entrada:</strong> ID_proyecto, ID_paciente, Fecha_evaluacion, Tipo_medicion, Peso_kg, Talla_cm, pliegues, diámetros, perímetros, Gravedad_especifica_orina y Observaciones.</p>
+      <div class="note">El Excel de entrada no necesita edad, IMC, puntajes Z ni resultados de somatotipo. La aplicación los calcula al importar.</div>
+    </div>
+  </section>
+
+  
+</div>
+
+<script>
+const WHO_REFS = [{"Mes":0,"HFA L F":1.0,"HFA M F":49.1477,"HFA S F":0.0379,"HFA L M":1.0,"HFA M M":49.8842,"HFA S M":0.03795,"BMI L F":-0.0631,"BMI M F":13.3363,"BMI S F":0.09272,"BMI L M":-0.3053,"BMI M M":13.4069,"BMI S M":0.0956,"Referencia":"OMS 2006"},{"Mes":1,"HFA L F":1.0,"HFA M F":53.6872,"HFA S F":0.0364,"HFA L M":1.0,"HFA M M":54.7244,"HFA S M":0.03557,"BMI L F":0.3448,"BMI M F":14.5679,"BMI S F":0.09556,"BMI L M":0.2708,"BMI M M":14.9441,"BMI S M":0.09027,"Referencia":"OMS 2006"},{"Mes":2,"HFA L F":1.0,"HFA M F":57.0673,"HFA S F":0.03568,"HFA L M":1.0,"HFA M M":58.4249,"HFA S M":0.03424,"BMI L F":0.1749,"BMI M F":15.7679,"BMI S F":0.09371,"BMI L M":0.1118,"BMI M M":16.3195,"BMI S M":0.08677,"Referencia":"OMS 2006"},{"Mes":3,"HFA L F":1.0,"HFA M F":59.8029,"HFA S F":0.0352,"HFA L M":1.0,"HFA M M":61.4292,"HFA S M":0.03328,"BMI L F":0.0643,"BMI M F":16.3574,"BMI S F":0.09254,"BMI L M":0.0068,"BMI M M":16.8987,"BMI S M":0.08495,"Referencia":"OMS 2006"},{"Mes":4,"HFA L F":1.0,"HFA M F":62.0899,"HFA S F":0.03486,"HFA L M":1.0,"HFA M M":63.886,"HFA S M":0.03257,"BMI L F":-0.0191,"BMI M F":16.6703,"BMI S F":0.09166,"BMI L M":-0.0727,"BMI M M":17.1579,"BMI S M":0.08378,"Referencia":"OMS 2006"},{"Mes":5,"HFA L F":1.0,"HFA M F":64.0301,"HFA S F":0.03463,"HFA L M":1.0,"HFA M M":65.9026,"HFA S M":0.03204,"BMI L F":-0.0864,"BMI M F":16.8386,"BMI S F":0.09096,"BMI L M":-0.137,"BMI M M":17.2919,"BMI S M":0.08296,"Referencia":"OMS 2006"},{"Mes":6,"HFA L F":1.0,"HFA M F":65.7311,"HFA S F":0.03448,"HFA L M":1.0,"HFA M M":67.6236,"HFA S M":0.03165,"BMI L F":-0.1429,"BMI M F":16.9083,"BMI S F":0.09036,"BMI L M":-0.1913,"BMI M M":17.3422,"BMI S M":0.08234,"Referencia":"OMS 2006"},{"Mes":7,"HFA L F":1.0,"HFA M F":67.2873,"HFA S F":0.03441,"HFA L M":1.0,"HFA M M":69.1645,"HFA S M":0.03139,"BMI L F":-0.1916,"BMI M F":16.902,"BMI S F":0.08984,"BMI L M":-0.2385,"BMI M M":17.3288,"BMI S M":0.08183,"Referencia":"OMS 2006"},{"Mes":8,"HFA L F":1.0,"HFA M F":68.7498,"HFA S F":0.0344,"HFA L M":1.0,"HFA M M":70.5994,"HFA S M":0.03124,"BMI L F":-0.2344,"BMI M F":16.8404,"BMI S F":0.08939,"BMI L M":-0.2802,"BMI M M":17.2647,"BMI S M":0.0814,"Referencia":"OMS 2006"},{"Mes":9,"HFA L F":1.0,"HFA M F":70.1435,"HFA S F":0.03444,"HFA L M":1.0,"HFA M M":71.9687,"HFA S M":0.03117,"BMI L F":-0.2725,"BMI M F":16.7406,"BMI S F":0.08898,"BMI L M":-0.3176,"BMI M M":17.1662,"BMI S M":0.08102,"Referencia":"OMS 2006"},{"Mes":10,"HFA L F":1.0,"HFA M F":71.4818,"HFA S F":0.03452,"HFA L M":1.0,"HFA M M":73.2812,"HFA S M":0.03118,"BMI L F":-0.3068,"BMI M F":16.6184,"BMI S F":0.08861,"BMI L M":-0.3516,"BMI M M":17.0488,"BMI S M":0.08068,"Referencia":"OMS 2006"},{"Mes":11,"HFA L F":1.0,"HFA M F":72.771,"HFA S F":0.03464,"HFA L M":1.0,"HFA M M":74.5388,"HFA S M":0.03125,"BMI L F":-0.3381,"BMI M F":16.4875,"BMI S F":0.08828,"BMI L M":-0.3828,"BMI M M":16.9239,"BMI S M":0.08037,"Referencia":"OMS 2006"},{"Mes":12,"HFA L F":1.0,"HFA M F":74.015,"HFA S F":0.03479,"HFA L M":1.0,"HFA M M":75.7488,"HFA S M":0.03137,"BMI L F":-0.3667,"BMI M F":16.3568,"BMI S F":0.08797,"BMI L M":-0.4115,"BMI M M":16.7981,"BMI S M":0.08009,"Referencia":"OMS 2006"},{"Mes":13,"HFA L F":1.0,"HFA M F":75.2176,"HFA S F":0.03496,"HFA L M":1.0,"HFA M M":76.9186,"HFA S M":0.03154,"BMI L F":-0.3932,"BMI M F":16.2311,"BMI S F":0.08768,"BMI L M":-0.4382,"BMI M M":16.6743,"BMI S M":0.07982,"Referencia":"OMS 2006"},{"Mes":14,"HFA L F":1.0,"HFA M F":76.3817,"HFA S F":0.03514,"HFA L M":1.0,"HFA M M":78.0497,"HFA S M":0.03174,"BMI L F":-0.4177,"BMI M F":16.1128,"BMI S F":0.08741,"BMI L M":-0.463,"BMI M M":16.5548,"BMI S M":0.07958,"Referencia":"OMS 2006"},{"Mes":15,"HFA L F":1.0,"HFA M F":77.5099,"HFA S F":0.03534,"HFA L M":1.0,"HFA M M":79.1458,"HFA S M":0.03197,"BMI L F":-0.4407,"BMI M F":16.0028,"BMI S F":0.08716,"BMI L M":-0.4863,"BMI M M":16.4409,"BMI S M":0.07935,"Referencia":"OMS 2006"},{"Mes":16,"HFA L F":1.0,"HFA M F":78.6055,"HFA S F":0.03555,"HFA L M":1.0,"HFA M M":80.2113,"HFA S M":0.03222,"BMI L F":-0.4623,"BMI M F":15.9017,"BMI S F":0.08693,"BMI L M":-0.5082,"BMI M M":16.3335,"BMI S M":0.07913,"Referencia":"OMS 2006"},{"Mes":17,"HFA L F":1.0,"HFA M F":79.671,"HFA S F":0.03576,"HFA L M":1.0,"HFA M M":81.2487,"HFA S M":0.0325,"BMI L F":-0.4825,"BMI M F":15.8096,"BMI S F":0.08671,"BMI L M":-0.5289,"BMI M M":16.2329,"BMI S M":0.07892,"Referencia":"OMS 2006"},{"Mes":18,"HFA L F":1.0,"HFA M F":80.7079,"HFA S F":0.03598,"HFA L M":1.0,"HFA M M":82.2587,"HFA S M":0.03279,"BMI L F":-0.5017,"BMI M F":15.7263,"BMI S F":0.0865,"BMI L M":-0.5484,"BMI M M":16.1392,"BMI S M":0.07873,"Referencia":"OMS 2006"},{"Mes":19,"HFA L F":1.0,"HFA M F":81.7182,"HFA S F":0.0362,"HFA L M":1.0,"HFA M M":83.2418,"HFA S M":0.0331,"BMI L F":-0.5199,"BMI M F":15.6517,"BMI S F":0.0863,"BMI L M":-0.5669,"BMI M M":16.0528,"BMI S M":0.07854,"Referencia":"OMS 2006"},{"Mes":20,"HFA L F":1.0,"HFA M F":82.7036,"HFA S F":0.03643,"HFA L M":1.0,"HFA M M":84.1996,"HFA S M":0.03342,"BMI L F":-0.5372,"BMI M F":15.5855,"BMI S F":0.08612,"BMI L M":-0.5846,"BMI M M":15.9743,"BMI S M":0.07836,"Referencia":"OMS 2006"},{"Mes":21,"HFA L F":1.0,"HFA M F":83.6654,"HFA S F":0.03666,"HFA L M":1.0,"HFA M M":85.1348,"HFA S M":0.03376,"BMI L F":-0.5537,"BMI M F":15.5278,"BMI S F":0.08594,"BMI L M":-0.6014,"BMI M M":15.9039,"BMI S M":0.07818,"Referencia":"OMS 2006"},{"Mes":22,"HFA L F":1.0,"HFA M F":84.604,"HFA S F":0.03688,"HFA L M":1.0,"HFA M M":86.0477,"HFA S M":0.0341,"BMI L F":-0.5695,"BMI M F":15.4787,"BMI S F":0.08577,"BMI L M":-0.6174,"BMI M M":15.8412,"BMI S M":0.07802,"Referencia":"OMS 2006"},{"Mes":23,"HFA L F":1.0,"HFA M F":85.5202,"HFA S F":0.03711,"HFA L M":1.0,"HFA M M":86.941,"HFA S M":0.03445,"BMI L F":-0.5846,"BMI M F":15.438,"BMI S F":0.0856,"BMI L M":-0.6328,"BMI M M":15.7852,"BMI S M":0.07786,"Referencia":"OMS 2006"},{"Mes":24,"HFA L F":1.0,"HFA M F":85.7153,"HFA S F":0.03764,"HFA L M":1.0,"HFA M M":87.1161,"HFA S M":0.03507,"BMI L F":-0.5684,"BMI M F":15.6881,"BMI S F":0.08454,"BMI L M":-0.6187,"BMI M M":16.0189,"BMI S M":0.07785,"Referencia":"OMS 2006"},{"Mes":25,"HFA L F":1.0,"HFA M F":86.5904,"HFA S F":0.03786,"HFA L M":1.0,"HFA M M":87.972,"HFA S M":0.03542,"BMI L F":-0.5684,"BMI M F":15.659,"BMI S F":0.08452,"BMI L M":-0.584,"BMI M M":15.98,"BMI S M":0.07792,"Referencia":"OMS 2006"},{"Mes":26,"HFA L F":1.0,"HFA M F":87.4462,"HFA S F":0.03808,"HFA L M":1.0,"HFA M M":88.8065,"HFA S M":0.03576,"BMI L F":-0.5684,"BMI M F":15.6308,"BMI S F":0.08449,"BMI L M":-0.5497,"BMI M M":15.9414,"BMI S M":0.078,"Referencia":"OMS 2006"},{"Mes":27,"HFA L F":1.0,"HFA M F":88.283,"HFA S F":0.0383,"HFA L M":1.0,"HFA M M":89.6197,"HFA S M":0.0361,"BMI L F":-0.5684,"BMI M F":15.6037,"BMI S F":0.08446,"BMI L M":-0.5166,"BMI M M":15.9036,"BMI S M":0.07808,"Referencia":"OMS 2006"},{"Mes":28,"HFA L F":1.0,"HFA M F":89.1004,"HFA S F":0.03851,"HFA L M":1.0,"HFA M M":90.412,"HFA S M":0.03642,"BMI L F":-0.5684,"BMI M F":15.5777,"BMI S F":0.08444,"BMI L M":-0.485,"BMI M M":15.8667,"BMI S M":0.07818,"Referencia":"OMS 2006"},{"Mes":29,"HFA L F":1.0,"HFA M F":89.8991,"HFA S F":0.03872,"HFA L M":1.0,"HFA M M":91.1828,"HFA S M":0.03674,"BMI L F":-0.5684,"BMI M F":15.5523,"BMI S F":0.08443,"BMI L M":-0.4552,"BMI M M":15.8306,"BMI S M":0.07829,"Referencia":"OMS 2006"},{"Mes":30,"HFA L F":1.0,"HFA M F":90.6797,"HFA S F":0.03893,"HFA L M":1.0,"HFA M M":91.9327,"HFA S M":0.03704,"BMI L F":-0.5684,"BMI M F":15.5276,"BMI S F":0.08444,"BMI L M":-0.4274,"BMI M M":15.7953,"BMI S M":0.07841,"Referencia":"OMS 2006"},{"Mes":31,"HFA L F":1.0,"HFA M F":91.443,"HFA S F":0.03913,"HFA L M":1.0,"HFA M M":92.6631,"HFA S M":0.03733,"BMI L F":-0.5684,"BMI M F":15.5034,"BMI S F":0.08448,"BMI L M":-0.4016,"BMI M M":15.7606,"BMI S M":0.07854,"Referencia":"OMS 2006"},{"Mes":32,"HFA L F":1.0,"HFA M F":92.1906,"HFA S F":0.03933,"HFA L M":1.0,"HFA M M":93.3753,"HFA S M":0.03761,"BMI L F":-0.5684,"BMI M F":15.4798,"BMI S F":0.08455,"BMI L M":-0.3782,"BMI M M":15.7267,"BMI S M":0.07867,"Referencia":"OMS 2006"},{"Mes":33,"HFA L F":1.0,"HFA M F":92.9239,"HFA S F":0.03952,"HFA L M":1.0,"HFA M M":94.0711,"HFA S M":0.03787,"BMI L F":-0.5684,"BMI M F":15.4572,"BMI S F":0.08467,"BMI L M":-0.3572,"BMI M M":15.6934,"BMI S M":0.07882,"Referencia":"OMS 2006"},{"Mes":34,"HFA L F":1.0,"HFA M F":93.6444,"HFA S F":0.03971,"HFA L M":1.0,"HFA M M":94.7532,"HFA S M":0.03812,"BMI L F":-0.5684,"BMI M F":15.4356,"BMI S F":0.08484,"BMI L M":-0.3388,"BMI M M":15.661,"BMI S M":0.07897,"Referencia":"OMS 2006"},{"Mes":35,"HFA L F":1.0,"HFA M F":94.3533,"HFA S F":0.03989,"HFA L M":1.0,"HFA M M":95.4236,"HFA S M":0.03836,"BMI L F":-0.5684,"BMI M F":15.4155,"BMI S F":0.08506,"BMI L M":-0.3231,"BMI M M":15.6294,"BMI S M":0.07914,"Referencia":"OMS 2006"},{"Mes":36,"HFA L F":1.0,"HFA M F":95.0515,"HFA S F":0.04006,"HFA L M":1.0,"HFA M M":96.0835,"HFA S M":0.03858,"BMI L F":-0.5684,"BMI M F":15.3968,"BMI S F":0.08535,"BMI L M":-0.3101,"BMI M M":15.5988,"BMI S M":0.07931,"Referencia":"OMS 2006"},{"Mes":37,"HFA L F":1.0,"HFA M F":95.7399,"HFA S F":0.04024,"HFA L M":1.0,"HFA M M":96.7337,"HFA S M":0.03879,"BMI L F":-0.5684,"BMI M F":15.3796,"BMI S F":0.08569,"BMI L M":-0.3,"BMI M M":15.5693,"BMI S M":0.0795,"Referencia":"OMS 2006"},{"Mes":38,"HFA L F":1.0,"HFA M F":96.4187,"HFA S F":0.04041,"HFA L M":1.0,"HFA M M":97.3749,"HFA S M":0.039,"BMI L F":-0.5684,"BMI M F":15.3638,"BMI S F":0.08609,"BMI L M":-0.2927,"BMI M M":15.541,"BMI S M":0.07969,"Referencia":"OMS 2006"},{"Mes":39,"HFA L F":1.0,"HFA M F":97.0885,"HFA S F":0.04057,"HFA L M":1.0,"HFA M M":98.0073,"HFA S M":0.03919,"BMI L F":-0.5684,"BMI M F":15.3493,"BMI S F":0.08654,"BMI L M":-0.2884,"BMI M M":15.514,"BMI S M":0.0799,"Referencia":"OMS 2006"},{"Mes":40,"HFA L F":1.0,"HFA M F":97.7493,"HFA S F":0.04073,"HFA L M":1.0,"HFA M M":98.631,"HFA S M":0.03937,"BMI L F":-0.5684,"BMI M F":15.3358,"BMI S F":0.08704,"BMI L M":-0.2869,"BMI M M":15.4885,"BMI S M":0.08012,"Referencia":"OMS 2006"},{"Mes":41,"HFA L F":1.0,"HFA M F":98.4015,"HFA S F":0.04089,"HFA L M":1.0,"HFA M M":99.2459,"HFA S M":0.03954,"BMI L F":-0.5684,"BMI M F":15.3233,"BMI S F":0.08757,"BMI L M":-0.2881,"BMI M M":15.4645,"BMI S M":0.08036,"Referencia":"OMS 2006"},{"Mes":42,"HFA L F":1.0,"HFA M F":99.0448,"HFA S F":0.04105,"HFA L M":1.0,"HFA M M":99.8515,"HFA S M":0.03971,"BMI L F":-0.5684,"BMI M F":15.3116,"BMI S F":0.08813,"BMI L M":-0.2919,"BMI M M":15.442,"BMI S M":0.08061,"Referencia":"OMS 2006"},{"Mes":43,"HFA L F":1.0,"HFA M F":99.6795,"HFA S F":0.0412,"HFA L M":1.0,"HFA M M":100.4485,"HFA S M":0.03986,"BMI L F":-0.5684,"BMI M F":15.3007,"BMI S F":0.08872,"BMI L M":-0.2981,"BMI M M":15.421,"BMI S M":0.08087,"Referencia":"OMS 2006"},{"Mes":44,"HFA L F":1.0,"HFA M F":100.3058,"HFA S F":0.04135,"HFA L M":1.0,"HFA M M":101.0374,"HFA S M":0.04002,"BMI L F":-0.5684,"BMI M F":15.2905,"BMI S F":0.08931,"BMI L M":-0.3067,"BMI M M":15.4013,"BMI S M":0.08115,"Referencia":"OMS 2006"},{"Mes":45,"HFA L F":1.0,"HFA M F":100.9238,"HFA S F":0.0415,"HFA L M":1.0,"HFA M M":101.6186,"HFA S M":0.04016,"BMI L F":-0.5684,"BMI M F":15.2814,"BMI S F":0.08991,"BMI L M":-0.3174,"BMI M M":15.3827,"BMI S M":0.08144,"Referencia":"OMS 2006"},{"Mes":46,"HFA L F":1.0,"HFA M F":101.5337,"HFA S F":0.04164,"HFA L M":1.0,"HFA M M":102.1933,"HFA S M":0.04031,"BMI L F":-0.5684,"BMI M F":15.2732,"BMI S F":0.09051,"BMI L M":-0.3303,"BMI M M":15.3652,"BMI S M":0.08174,"Referencia":"OMS 2006"},{"Mes":47,"HFA L F":1.0,"HFA M F":102.136,"HFA S F":0.04179,"HFA L M":1.0,"HFA M M":102.7625,"HFA S M":0.04045,"BMI L F":-0.5684,"BMI M F":15.2661,"BMI S F":0.0911,"BMI L M":-0.3452,"BMI M M":15.3485,"BMI S M":0.08205,"Referencia":"OMS 2006"},{"Mes":48,"HFA L F":1.0,"HFA M F":102.7312,"HFA S F":0.04193,"HFA L M":1.0,"HFA M M":103.3273,"HFA S M":0.04059,"BMI L F":-0.5684,"BMI M F":15.2602,"BMI S F":0.09168,"BMI L M":-0.3622,"BMI M M":15.3326,"BMI S M":0.08238,"Referencia":"OMS 2006"},{"Mes":49,"HFA L F":1.0,"HFA M F":103.3197,"HFA S F":0.04206,"HFA L M":1.0,"HFA M M":103.8886,"HFA S M":0.04073,"BMI L F":-0.5684,"BMI M F":15.2556,"BMI S F":0.09227,"BMI L M":-0.3811,"BMI M M":15.3174,"BMI S M":0.08272,"Referencia":"OMS 2006"},{"Mes":50,"HFA L F":1.0,"HFA M F":103.9021,"HFA S F":0.0422,"HFA L M":1.0,"HFA M M":104.4473,"HFA S M":0.04086,"BMI L F":-0.5684,"BMI M F":15.2523,"BMI S F":0.09286,"BMI L M":-0.4019,"BMI M M":15.3029,"BMI S M":0.08307,"Referencia":"OMS 2006"},{"Mes":51,"HFA L F":1.0,"HFA M F":104.4786,"HFA S F":0.04233,"HFA L M":1.0,"HFA M M":105.0041,"HFA S M":0.041,"BMI L F":-0.5684,"BMI M F":15.2503,"BMI S F":0.09345,"BMI L M":-0.4245,"BMI M M":15.2891,"BMI S M":0.08343,"Referencia":"OMS 2006"},{"Mes":52,"HFA L F":1.0,"HFA M F":105.0494,"HFA S F":0.04246,"HFA L M":1.0,"HFA M M":105.5596,"HFA S M":0.04113,"BMI L F":-0.5684,"BMI M F":15.2496,"BMI S F":0.09403,"BMI L M":-0.4488,"BMI M M":15.2759,"BMI S M":0.0838,"Referencia":"OMS 2006"},{"Mes":53,"HFA L F":1.0,"HFA M F":105.6148,"HFA S F":0.04259,"HFA L M":1.0,"HFA M M":106.1138,"HFA S M":0.04126,"BMI L F":-0.5684,"BMI M F":15.2502,"BMI S F":0.0946,"BMI L M":-0.4747,"BMI M M":15.2633,"BMI S M":0.08418,"Referencia":"OMS 2006"},{"Mes":54,"HFA L F":1.0,"HFA M F":106.1748,"HFA S F":0.04272,"HFA L M":1.0,"HFA M M":106.6668,"HFA S M":0.04139,"BMI L F":-0.5684,"BMI M F":15.2519,"BMI S F":0.09515,"BMI L M":-0.5019,"BMI M M":15.2514,"BMI S M":0.08457,"Referencia":"OMS 2006"},{"Mes":55,"HFA L F":1.0,"HFA M F":106.7295,"HFA S F":0.04285,"HFA L M":1.0,"HFA M M":107.2188,"HFA S M":0.04152,"BMI L F":-0.5684,"BMI M F":15.2544,"BMI S F":0.09568,"BMI L M":-0.5303,"BMI M M":15.24,"BMI S M":0.08496,"Referencia":"OMS 2006"},{"Mes":56,"HFA L F":1.0,"HFA M F":107.2788,"HFA S F":0.04298,"HFA L M":1.0,"HFA M M":107.7697,"HFA S M":0.04165,"BMI L F":-0.5684,"BMI M F":15.2575,"BMI S F":0.09618,"BMI L M":-0.5599,"BMI M M":15.2291,"BMI S M":0.08536,"Referencia":"OMS 2006"},{"Mes":57,"HFA L F":1.0,"HFA M F":107.8227,"HFA S F":0.0431,"HFA L M":1.0,"HFA M M":108.3198,"HFA S M":0.04177,"BMI L F":-0.5684,"BMI M F":15.2612,"BMI S F":0.09665,"BMI L M":-0.5905,"BMI M M":15.2188,"BMI S M":0.08577,"Referencia":"OMS 2006"},{"Mes":58,"HFA L F":1.0,"HFA M F":108.3613,"HFA S F":0.04322,"HFA L M":1.0,"HFA M M":108.8689,"HFA S M":0.0419,"BMI L F":-0.5684,"BMI M F":15.2653,"BMI S F":0.09709,"BMI L M":-0.6223,"BMI M M":15.2091,"BMI S M":0.08617,"Referencia":"OMS 2006"},{"Mes":59,"HFA L F":1.0,"HFA M F":108.8948,"HFA S F":0.04334,"HFA L M":1.0,"HFA M M":109.417,"HFA S M":0.04202,"BMI L F":-0.5684,"BMI M F":15.2698,"BMI S F":0.0975,"BMI L M":-0.6552,"BMI M M":15.2,"BMI S M":0.08659,"Referencia":"OMS 2006"},{"Mes":60,"HFA L F":1.0,"HFA M F":109.4233,"HFA S F":0.04347,"HFA L M":1.0,"HFA M M":109.9638,"HFA S M":0.04214,"BMI L F":-0.5684,"BMI M F":15.2747,"BMI S F":0.09789,"BMI L M":-0.6892,"BMI M M":15.1916,"BMI S M":0.087,"Referencia":"OMS 2006"},{"Mes":61,"HFA L F":1.0,"HFA M F":109.6016,"HFA S F":0.04355,"HFA L M":1.0,"HFA M M":110.2647,"HFA S M":0.04164,"BMI L F":-0.8886,"BMI M F":15.2441,"BMI S F":0.09692,"BMI L M":-0.7387,"BMI M M":15.2641,"BMI S M":0.0839,"Referencia":"OMS 2007"},{"Mes":62,"HFA L F":1.0,"HFA M F":110.1258,"HFA S F":0.04364,"HFA L M":1.0,"HFA M M":110.8006,"HFA S M":0.04172,"BMI L F":-0.9068,"BMI M F":15.2434,"BMI S F":0.09738,"BMI L M":-0.7621,"BMI M M":15.2616,"BMI S M":0.08414,"Referencia":"OMS 2007"},{"Mes":63,"HFA L F":1.0,"HFA M F":110.6451,"HFA S F":0.04373,"HFA L M":1.0,"HFA M M":111.3338,"HFA S M":0.0418,"BMI L F":-0.9248,"BMI M F":15.2433,"BMI S F":0.09783,"BMI L M":-0.7856,"BMI M M":15.2604,"BMI S M":0.08439,"Referencia":"OMS 2007"},{"Mes":64,"HFA L F":1.0,"HFA M F":111.1596,"HFA S F":0.04382,"HFA L M":1.0,"HFA M M":111.8636,"HFA S M":0.04187,"BMI L F":-0.9427,"BMI M F":15.2438,"BMI S F":0.09829,"BMI L M":-0.8089,"BMI M M":15.2605,"BMI S M":0.08464,"Referencia":"OMS 2007"},{"Mes":65,"HFA L F":1.0,"HFA M F":111.6696,"HFA S F":0.0439,"HFA L M":1.0,"HFA M M":112.3895,"HFA S M":0.04195,"BMI L F":-0.9605,"BMI M F":15.2448,"BMI S F":0.09875,"BMI L M":-0.8322,"BMI M M":15.2619,"BMI S M":0.0849,"Referencia":"OMS 2007"},{"Mes":66,"HFA L F":1.0,"HFA M F":112.1753,"HFA S F":0.04399,"HFA L M":1.0,"HFA M M":112.911,"HFA S M":0.04203,"BMI L F":-0.978,"BMI M F":15.2464,"BMI S F":0.0992,"BMI L M":-0.8554,"BMI M M":15.2645,"BMI S M":0.08516,"Referencia":"OMS 2007"},{"Mes":67,"HFA L F":1.0,"HFA M F":112.6767,"HFA S F":0.04407,"HFA L M":1.0,"HFA M M":113.428,"HFA S M":0.04211,"BMI L F":-0.9954,"BMI M F":15.2487,"BMI S F":0.09966,"BMI L M":-0.8785,"BMI M M":15.2684,"BMI S M":0.08543,"Referencia":"OMS 2007"},{"Mes":68,"HFA L F":1.0,"HFA M F":113.174,"HFA S F":0.04415,"HFA L M":1.0,"HFA M M":113.941,"HFA S M":0.04218,"BMI L F":-1.0126,"BMI M F":15.2516,"BMI S F":0.10012,"BMI L M":-0.9015,"BMI M M":15.2737,"BMI S M":0.0857,"Referencia":"OMS 2007"},{"Mes":69,"HFA L F":1.0,"HFA M F":113.6672,"HFA S F":0.04423,"HFA L M":1.0,"HFA M M":114.45,"HFA S M":0.04226,"BMI L F":-1.0296,"BMI M F":15.2551,"BMI S F":0.10058,"BMI L M":-0.9243,"BMI M M":15.2801,"BMI S M":0.08597,"Referencia":"OMS 2007"},{"Mes":70,"HFA L F":1.0,"HFA M F":114.1565,"HFA S F":0.04431,"HFA L M":1.0,"HFA M M":114.9547,"HFA S M":0.04234,"BMI L F":-1.0464,"BMI M F":15.2592,"BMI S F":0.10104,"BMI L M":-0.9471,"BMI M M":15.2877,"BMI S M":0.08625,"Referencia":"OMS 2007"},{"Mes":71,"HFA L F":1.0,"HFA M F":114.6421,"HFA S F":0.04439,"HFA L M":1.0,"HFA M M":115.4549,"HFA S M":0.04241,"BMI L F":-1.063,"BMI M F":15.2641,"BMI S F":0.10149,"BMI L M":-0.9697,"BMI M M":15.2965,"BMI S M":0.08653,"Referencia":"OMS 2007"},{"Mes":72,"HFA L F":1.0,"HFA M F":115.1244,"HFA S F":0.04447,"HFA L M":1.0,"HFA M M":115.9509,"HFA S M":0.04249,"BMI L F":-1.0794,"BMI M F":15.2697,"BMI S F":0.10195,"BMI L M":-0.9921,"BMI M M":15.3062,"BMI S M":0.08682,"Referencia":"OMS 2007"},{"Mes":73,"HFA L F":1.0,"HFA M F":115.6039,"HFA S F":0.04454,"HFA L M":1.0,"HFA M M":116.4432,"HFA S M":0.04257,"BMI L F":-1.0956,"BMI M F":15.276,"BMI S F":0.10241,"BMI L M":-1.0144,"BMI M M":15.3169,"BMI S M":0.08711,"Referencia":"OMS 2007"},{"Mes":74,"HFA L F":1.0,"HFA M F":116.0812,"HFA S F":0.04461,"HFA L M":1.0,"HFA M M":116.9325,"HFA S M":0.04264,"BMI L F":-1.1115,"BMI M F":15.2831,"BMI S F":0.10287,"BMI L M":-1.0365,"BMI M M":15.3285,"BMI S M":0.08741,"Referencia":"OMS 2007"},{"Mes":75,"HFA L F":1.0,"HFA M F":116.5568,"HFA S F":0.04469,"HFA L M":1.0,"HFA M M":117.4196,"HFA S M":0.04272,"BMI L F":-1.1272,"BMI M F":15.2911,"BMI S F":0.10333,"BMI L M":-1.0584,"BMI M M":15.3408,"BMI S M":0.08771,"Referencia":"OMS 2007"},{"Mes":76,"HFA L F":1.0,"HFA M F":117.0311,"HFA S F":0.04475,"HFA L M":1.0,"HFA M M":117.9046,"HFA S M":0.0428,"BMI L F":-1.1427,"BMI M F":15.2998,"BMI S F":0.10379,"BMI L M":-1.0801,"BMI M M":15.354,"BMI S M":0.08802,"Referencia":"OMS 2007"},{"Mes":77,"HFA L F":1.0,"HFA M F":117.5044,"HFA S F":0.04482,"HFA L M":1.0,"HFA M M":118.388,"HFA S M":0.04287,"BMI L F":-1.1579,"BMI M F":15.3095,"BMI S F":0.10425,"BMI L M":-1.1017,"BMI M M":15.3679,"BMI S M":0.08833,"Referencia":"OMS 2007"},{"Mes":78,"HFA L F":1.0,"HFA M F":117.9769,"HFA S F":0.04489,"HFA L M":1.0,"HFA M M":118.87,"HFA S M":0.04295,"BMI L F":-1.1728,"BMI M F":15.32,"BMI S F":0.10471,"BMI L M":-1.123,"BMI M M":15.3825,"BMI S M":0.08865,"Referencia":"OMS 2007"},{"Mes":79,"HFA L F":1.0,"HFA M F":118.4489,"HFA S F":0.04495,"HFA L M":1.0,"HFA M M":119.3508,"HFA S M":0.04303,"BMI L F":-1.1875,"BMI M F":15.3314,"BMI S F":0.10517,"BMI L M":-1.1441,"BMI M M":15.3978,"BMI S M":0.08898,"Referencia":"OMS 2007"},{"Mes":80,"HFA L F":1.0,"HFA M F":118.9208,"HFA S F":0.04502,"HFA L M":1.0,"HFA M M":119.8303,"HFA S M":0.04311,"BMI L F":-1.2019,"BMI M F":15.3439,"BMI S F":0.10562,"BMI L M":-1.1649,"BMI M M":15.4137,"BMI S M":0.08931,"Referencia":"OMS 2007"},{"Mes":81,"HFA L F":1.0,"HFA M F":119.3926,"HFA S F":0.04508,"HFA L M":1.0,"HFA M M":120.3085,"HFA S M":0.04318,"BMI L F":-1.216,"BMI M F":15.3572,"BMI S F":0.10608,"BMI L M":-1.1856,"BMI M M":15.4302,"BMI S M":0.08964,"Referencia":"OMS 2007"},{"Mes":82,"HFA L F":1.0,"HFA M F":119.8648,"HFA S F":0.04514,"HFA L M":1.0,"HFA M M":120.7853,"HFA S M":0.04326,"BMI L F":-1.2298,"BMI M F":15.3717,"BMI S F":0.10654,"BMI L M":-1.206,"BMI M M":15.4473,"BMI S M":0.08998,"Referencia":"OMS 2007"},{"Mes":83,"HFA L F":1.0,"HFA M F":120.3374,"HFA S F":0.0452,"HFA L M":1.0,"HFA M M":121.2604,"HFA S M":0.04334,"BMI L F":-1.2433,"BMI M F":15.3871,"BMI S F":0.107,"BMI L M":-1.2261,"BMI M M":15.465,"BMI S M":0.09033,"Referencia":"OMS 2007"},{"Mes":84,"HFA L F":1.0,"HFA M F":120.8105,"HFA S F":0.04525,"HFA L M":1.0,"HFA M M":121.7338,"HFA S M":0.04342,"BMI L F":-1.2565,"BMI M F":15.4036,"BMI S F":0.10746,"BMI L M":-1.246,"BMI M M":15.4832,"BMI S M":0.09068,"Referencia":"OMS 2007"},{"Mes":85,"HFA L F":1.0,"HFA M F":121.2843,"HFA S F":0.04531,"HFA L M":1.0,"HFA M M":122.2053,"HFA S M":0.0435,"BMI L F":-1.2693,"BMI M F":15.4211,"BMI S F":0.10792,"BMI L M":-1.2656,"BMI M M":15.5019,"BMI S M":0.09103,"Referencia":"OMS 2007"},{"Mes":86,"HFA L F":1.0,"HFA M F":121.7587,"HFA S F":0.04536,"HFA L M":1.0,"HFA M M":122.675,"HFA S M":0.04358,"BMI L F":-1.2819,"BMI M F":15.4397,"BMI S F":0.10837,"BMI L M":-1.2849,"BMI M M":15.521,"BMI S M":0.09139,"Referencia":"OMS 2007"},{"Mes":87,"HFA L F":1.0,"HFA M F":122.2338,"HFA S F":0.04542,"HFA L M":1.0,"HFA M M":123.1429,"HFA S M":0.04366,"BMI L F":-1.2941,"BMI M F":15.4593,"BMI S F":0.10883,"BMI L M":-1.304,"BMI M M":15.5407,"BMI S M":0.09176,"Referencia":"OMS 2007"},{"Mes":88,"HFA L F":1.0,"HFA M F":122.7098,"HFA S F":0.04547,"HFA L M":1.0,"HFA M M":123.6092,"HFA S M":0.04374,"BMI L F":-1.306,"BMI M F":15.4798,"BMI S F":0.10929,"BMI L M":-1.3228,"BMI M M":15.5608,"BMI S M":0.09213,"Referencia":"OMS 2007"},{"Mes":89,"HFA L F":1.0,"HFA M F":123.1868,"HFA S F":0.04551,"HFA L M":1.0,"HFA M M":124.0736,"HFA S M":0.04382,"BMI L F":-1.3175,"BMI M F":15.5014,"BMI S F":0.10974,"BMI L M":-1.3414,"BMI M M":15.5814,"BMI S M":0.09251,"Referencia":"OMS 2007"},{"Mes":90,"HFA L F":1.0,"HFA M F":123.6646,"HFA S F":0.04556,"HFA L M":1.0,"HFA M M":124.5361,"HFA S M":0.0439,"BMI L F":-1.3287,"BMI M F":15.524,"BMI S F":0.1102,"BMI L M":-1.3596,"BMI M M":15.6023,"BMI S M":0.09289,"Referencia":"OMS 2007"},{"Mes":91,"HFA L F":1.0,"HFA M F":124.1435,"HFA S F":0.04561,"HFA L M":1.0,"HFA M M":124.9964,"HFA S M":0.04398,"BMI L F":-1.3395,"BMI M F":15.5476,"BMI S F":0.11065,"BMI L M":-1.3776,"BMI M M":15.6237,"BMI S M":0.09327,"Referencia":"OMS 2007"},{"Mes":92,"HFA L F":1.0,"HFA M F":124.6234,"HFA S F":0.04565,"HFA L M":1.0,"HFA M M":125.4545,"HFA S M":0.04406,"BMI L F":-1.3499,"BMI M F":15.5723,"BMI S F":0.1111,"BMI L M":-1.3953,"BMI M M":15.6455,"BMI S M":0.09366,"Referencia":"OMS 2007"},{"Mes":93,"HFA L F":1.0,"HFA M F":125.1045,"HFA S F":0.04569,"HFA L M":1.0,"HFA M M":125.9104,"HFA S M":0.04414,"BMI L F":-1.36,"BMI M F":15.5979,"BMI S F":0.11156,"BMI L M":-1.4126,"BMI M M":15.6677,"BMI S M":0.09406,"Referencia":"OMS 2007"},{"Mes":94,"HFA L F":1.0,"HFA M F":125.5869,"HFA S F":0.04573,"HFA L M":1.0,"HFA M M":126.364,"HFA S M":0.04422,"BMI L F":-1.3697,"BMI M F":15.6246,"BMI S F":0.11201,"BMI L M":-1.4297,"BMI M M":15.6903,"BMI S M":0.09445,"Referencia":"OMS 2007"},{"Mes":95,"HFA L F":1.0,"HFA M F":126.0706,"HFA S F":0.04577,"HFA L M":1.0,"HFA M M":126.8156,"HFA S M":0.0443,"BMI L F":-1.379,"BMI M F":15.6523,"BMI S F":0.11246,"BMI L M":-1.4464,"BMI M M":15.7133,"BMI S M":0.09486,"Referencia":"OMS 2007"},{"Mes":96,"HFA L F":1.0,"HFA M F":126.5558,"HFA S F":0.04581,"HFA L M":1.0,"HFA M M":127.2651,"HFA S M":0.04438,"BMI L F":-1.388,"BMI M F":15.681,"BMI S F":0.11291,"BMI L M":-1.4629,"BMI M M":15.7368,"BMI S M":0.09526,"Referencia":"OMS 2007"},{"Mes":97,"HFA L F":1.0,"HFA M F":127.0424,"HFA S F":0.04585,"HFA L M":1.0,"HFA M M":127.7129,"HFA S M":0.04446,"BMI L F":-1.3966,"BMI M F":15.7107,"BMI S F":0.11335,"BMI L M":-1.479,"BMI M M":15.7606,"BMI S M":0.09567,"Referencia":"OMS 2007"},{"Mes":98,"HFA L F":1.0,"HFA M F":127.5304,"HFA S F":0.04588,"HFA L M":1.0,"HFA M M":128.159,"HFA S M":0.04454,"BMI L F":-1.4047,"BMI M F":15.7415,"BMI S F":0.1138,"BMI L M":-1.4947,"BMI M M":15.7848,"BMI S M":0.09609,"Referencia":"OMS 2007"},{"Mes":99,"HFA L F":1.0,"HFA M F":128.0199,"HFA S F":0.04591,"HFA L M":1.0,"HFA M M":128.6034,"HFA S M":0.04462,"BMI L F":-1.4125,"BMI M F":15.7732,"BMI S F":0.11424,"BMI L M":-1.5101,"BMI M M":15.8094,"BMI S M":0.09651,"Referencia":"OMS 2007"},{"Mes":100,"HFA L F":1.0,"HFA M F":128.5109,"HFA S F":0.04594,"HFA L M":1.0,"HFA M M":129.0466,"HFA S M":0.0447,"BMI L F":-1.4199,"BMI M F":15.8058,"BMI S F":0.11469,"BMI L M":-1.5252,"BMI M M":15.8344,"BMI S M":0.09693,"Referencia":"OMS 2007"},{"Mes":101,"HFA L F":1.0,"HFA M F":129.0035,"HFA S F":0.04597,"HFA L M":1.0,"HFA M M":129.4887,"HFA S M":0.04478,"BMI L F":-1.427,"BMI M F":15.8394,"BMI S F":0.11513,"BMI L M":-1.5399,"BMI M M":15.8597,"BMI S M":0.09735,"Referencia":"OMS 2007"},{"Mes":102,"HFA L F":1.0,"HFA M F":129.4975,"HFA S F":0.046,"HFA L M":1.0,"HFA M M":129.93,"HFA S M":0.04487,"BMI L F":-1.4336,"BMI M F":15.8738,"BMI S F":0.11557,"BMI L M":-1.5542,"BMI M M":15.8855,"BMI S M":0.09778,"Referencia":"OMS 2007"},{"Mes":103,"HFA L F":1.0,"HFA M F":129.9932,"HFA S F":0.04602,"HFA L M":1.0,"HFA M M":130.3705,"HFA S M":0.04495,"BMI L F":-1.4398,"BMI M F":15.909,"BMI S F":0.11601,"BMI L M":-1.5681,"BMI M M":15.9116,"BMI S M":0.09821,"Referencia":"OMS 2007"},{"Mes":104,"HFA L F":1.0,"HFA M F":130.4904,"HFA S F":0.04604,"HFA L M":1.0,"HFA M M":130.8103,"HFA S M":0.04503,"BMI L F":-1.4456,"BMI M F":15.9451,"BMI S F":0.11644,"BMI L M":-1.5817,"BMI M M":15.9381,"BMI S M":0.09864,"Referencia":"OMS 2007"},{"Mes":105,"HFA L F":1.0,"HFA M F":130.9891,"HFA S F":0.04607,"HFA L M":1.0,"HFA M M":131.2495,"HFA S M":0.04511,"BMI L F":-1.4511,"BMI M F":15.9818,"BMI S F":0.11688,"BMI L M":-1.5948,"BMI M M":15.9651,"BMI S M":0.09907,"Referencia":"OMS 2007"},{"Mes":106,"HFA L F":1.0,"HFA M F":131.4895,"HFA S F":0.04608,"HFA L M":1.0,"HFA M M":131.6884,"HFA S M":0.04519,"BMI L F":-1.4561,"BMI M F":16.0194,"BMI S F":0.11731,"BMI L M":-1.6076,"BMI M M":15.9925,"BMI S M":0.09951,"Referencia":"OMS 2007"},{"Mes":107,"HFA L F":1.0,"HFA M F":131.9912,"HFA S F":0.0461,"HFA L M":1.0,"HFA M M":132.1269,"HFA S M":0.04527,"BMI L F":-1.4607,"BMI M F":16.0575,"BMI S F":0.11774,"BMI L M":-1.6199,"BMI M M":16.0205,"BMI S M":0.09994,"Referencia":"OMS 2007"},{"Mes":108,"HFA L F":1.0,"HFA M F":132.4944,"HFA S F":0.04612,"HFA L M":1.0,"HFA M M":132.5652,"HFA S M":0.04535,"BMI L F":-1.465,"BMI M F":16.0964,"BMI S F":0.11816,"BMI L M":-1.6318,"BMI M M":16.049,"BMI S M":0.10038,"Referencia":"OMS 2007"},{"Mes":109,"HFA L F":1.0,"HFA M F":132.9989,"HFA S F":0.04613,"HFA L M":1.0,"HFA M M":133.0031,"HFA S M":0.04543,"BMI L F":-1.4688,"BMI M F":16.1358,"BMI S F":0.11859,"BMI L M":-1.6433,"BMI M M":16.0781,"BMI S M":0.10082,"Referencia":"OMS 2007"},{"Mes":110,"HFA L F":1.0,"HFA M F":133.5046,"HFA S F":0.04614,"HFA L M":1.0,"HFA M M":133.4404,"HFA S M":0.04551,"BMI L F":-1.4723,"BMI M F":16.1759,"BMI S F":0.11901,"BMI L M":-1.6544,"BMI M M":16.1078,"BMI S M":0.10126,"Referencia":"OMS 2007"},{"Mes":111,"HFA L F":1.0,"HFA M F":134.0118,"HFA S F":0.04615,"HFA L M":1.0,"HFA M M":133.877,"HFA S M":0.04559,"BMI L F":-1.4753,"BMI M F":16.2166,"BMI S F":0.11943,"BMI L M":-1.6651,"BMI M M":16.1381,"BMI S M":0.1017,"Referencia":"OMS 2007"},{"Mes":112,"HFA L F":1.0,"HFA M F":134.5202,"HFA S F":0.04616,"HFA L M":1.0,"HFA M M":134.313,"HFA S M":0.04566,"BMI L F":-1.478,"BMI M F":16.258,"BMI S F":0.11985,"BMI L M":-1.6753,"BMI M M":16.1692,"BMI S M":0.10214,"Referencia":"OMS 2007"},{"Mes":113,"HFA L F":1.0,"HFA M F":135.0299,"HFA S F":0.04616,"HFA L M":1.0,"HFA M M":134.7483,"HFA S M":0.04574,"BMI L F":-1.4803,"BMI M F":16.2999,"BMI S F":0.12026,"BMI L M":-1.6851,"BMI M M":16.2009,"BMI S M":0.10259,"Referencia":"OMS 2007"},{"Mes":114,"HFA L F":1.0,"HFA M F":135.541,"HFA S F":0.04617,"HFA L M":1.0,"HFA M M":135.1829,"HFA S M":0.04582,"BMI L F":-1.4823,"BMI M F":16.3425,"BMI S F":0.12067,"BMI L M":-1.6944,"BMI M M":16.2333,"BMI S M":0.10303,"Referencia":"OMS 2007"},{"Mes":115,"HFA L F":1.0,"HFA M F":136.0533,"HFA S F":0.04617,"HFA L M":1.0,"HFA M M":135.6168,"HFA S M":0.04589,"BMI L F":-1.4838,"BMI M F":16.3858,"BMI S F":0.12108,"BMI L M":-1.7032,"BMI M M":16.2665,"BMI S M":0.10347,"Referencia":"OMS 2007"},{"Mes":116,"HFA L F":1.0,"HFA M F":136.567,"HFA S F":0.04616,"HFA L M":1.0,"HFA M M":136.0501,"HFA S M":0.04597,"BMI L F":-1.485,"BMI M F":16.4298,"BMI S F":0.12148,"BMI L M":-1.7116,"BMI M M":16.3004,"BMI S M":0.10391,"Referencia":"OMS 2007"},{"Mes":117,"HFA L F":1.0,"HFA M F":137.0821,"HFA S F":0.04616,"HFA L M":1.0,"HFA M M":136.4829,"HFA S M":0.04604,"BMI L F":-1.4859,"BMI M F":16.4746,"BMI S F":0.12188,"BMI L M":-1.7196,"BMI M M":16.3351,"BMI S M":0.10435,"Referencia":"OMS 2007"},{"Mes":118,"HFA L F":1.0,"HFA M F":137.5987,"HFA S F":0.04616,"HFA L M":1.0,"HFA M M":136.9153,"HFA S M":0.04612,"BMI L F":-1.4864,"BMI M F":16.52,"BMI S F":0.12228,"BMI L M":-1.7271,"BMI M M":16.3704,"BMI S M":0.10478,"Referencia":"OMS 2007"},{"Mes":119,"HFA L F":1.0,"HFA M F":138.1167,"HFA S F":0.04615,"HFA L M":1.0,"HFA M M":137.3474,"HFA S M":0.04619,"BMI L F":-1.4866,"BMI M F":16.5663,"BMI S F":0.12268,"BMI L M":-1.7341,"BMI M M":16.4065,"BMI S M":0.10522,"Referencia":"OMS 2007"},{"Mes":120,"HFA L F":1.0,"HFA M F":138.6363,"HFA S F":0.04614,"HFA L M":1.0,"HFA M M":137.7795,"HFA S M":0.04626,"BMI L F":-1.4864,"BMI M F":16.6133,"BMI S F":0.12307,"BMI L M":-1.7407,"BMI M M":16.4433,"BMI S M":0.10566,"Referencia":"OMS 2007"},{"Mes":121,"HFA L F":1.0,"HFA M F":139.1575,"HFA S F":0.04612,"HFA L M":1.0,"HFA M M":138.2119,"HFA S M":0.04633,"BMI L F":-1.4859,"BMI M F":16.6612,"BMI S F":0.12346,"BMI L M":-1.7468,"BMI M M":16.4807,"BMI S M":0.10609,"Referencia":"OMS 2007"},{"Mes":122,"HFA L F":1.0,"HFA M F":139.6803,"HFA S F":0.04611,"HFA L M":1.0,"HFA M M":138.6452,"HFA S M":0.0464,"BMI L F":-1.4851,"BMI M F":16.71,"BMI S F":0.12384,"BMI L M":-1.7525,"BMI M M":16.5189,"BMI S M":0.10652,"Referencia":"OMS 2007"},{"Mes":123,"HFA L F":1.0,"HFA M F":140.2049,"HFA S F":0.04609,"HFA L M":1.0,"HFA M M":139.0797,"HFA S M":0.04647,"BMI L F":-1.4839,"BMI M F":16.7595,"BMI S F":0.12422,"BMI L M":-1.7578,"BMI M M":16.5578,"BMI S M":0.10695,"Referencia":"OMS 2007"},{"Mes":124,"HFA L F":1.0,"HFA M F":140.7313,"HFA S F":0.04607,"HFA L M":1.0,"HFA M M":139.5158,"HFA S M":0.04654,"BMI L F":-1.4825,"BMI M F":16.81,"BMI S F":0.1246,"BMI L M":-1.7626,"BMI M M":16.5974,"BMI S M":0.10738,"Referencia":"OMS 2007"},{"Mes":125,"HFA L F":1.0,"HFA M F":141.2594,"HFA S F":0.04605,"HFA L M":1.0,"HFA M M":139.954,"HFA S M":0.04661,"BMI L F":-1.4807,"BMI M F":16.8614,"BMI S F":0.12497,"BMI L M":-1.767,"BMI M M":16.6376,"BMI S M":0.1078,"Referencia":"OMS 2007"},{"Mes":126,"HFA L F":1.0,"HFA M F":141.7892,"HFA S F":0.04603,"HFA L M":1.0,"HFA M M":140.3948,"HFA S M":0.04667,"BMI L F":-1.4787,"BMI M F":16.9136,"BMI S F":0.12534,"BMI L M":-1.771,"BMI M M":16.6786,"BMI S M":0.10823,"Referencia":"OMS 2007"},{"Mes":127,"HFA L F":1.0,"HFA M F":142.3206,"HFA S F":0.046,"HFA L M":1.0,"HFA M M":140.8387,"HFA S M":0.04674,"BMI L F":-1.4763,"BMI M F":16.9667,"BMI S F":0.12571,"BMI L M":-1.7745,"BMI M M":16.7203,"BMI S M":0.10865,"Referencia":"OMS 2007"},{"Mes":128,"HFA L F":1.0,"HFA M F":142.8534,"HFA S F":0.04597,"HFA L M":1.0,"HFA M M":141.2859,"HFA S M":0.0468,"BMI L F":-1.4737,"BMI M F":17.0208,"BMI S F":0.12607,"BMI L M":-1.7777,"BMI M M":16.7628,"BMI S M":0.10906,"Referencia":"OMS 2007"},{"Mes":129,"HFA L F":1.0,"HFA M F":143.3874,"HFA S F":0.04594,"HFA L M":1.0,"HFA M M":141.7368,"HFA S M":0.04686,"BMI L F":-1.4708,"BMI M F":17.0757,"BMI S F":0.12643,"BMI L M":-1.7804,"BMI M M":16.8059,"BMI S M":0.10948,"Referencia":"OMS 2007"},{"Mes":130,"HFA L F":1.0,"HFA M F":143.9222,"HFA S F":0.04591,"HFA L M":1.0,"HFA M M":142.1916,"HFA S M":0.04692,"BMI L F":-1.4677,"BMI M F":17.1316,"BMI S F":0.12678,"BMI L M":-1.7828,"BMI M M":16.8497,"BMI S M":0.10989,"Referencia":"OMS 2007"},{"Mes":131,"HFA L F":1.0,"HFA M F":144.4575,"HFA S F":0.04588,"HFA L M":1.0,"HFA M M":142.6501,"HFA S M":0.04698,"BMI L F":-1.4642,"BMI M F":17.1883,"BMI S F":0.12713,"BMI L M":-1.7847,"BMI M M":16.8941,"BMI S M":0.1103,"Referencia":"OMS 2007"},{"Mes":132,"HFA L F":1.0,"HFA M F":144.9929,"HFA S F":0.04584,"HFA L M":1.0,"HFA M M":143.1126,"HFA S M":0.04703,"BMI L F":-1.4606,"BMI M F":17.2459,"BMI S F":0.12748,"BMI L M":-1.7862,"BMI M M":16.9392,"BMI S M":0.1107,"Referencia":"OMS 2007"},{"Mes":133,"HFA L F":1.0,"HFA M F":145.528,"HFA S F":0.0458,"HFA L M":1.0,"HFA M M":143.5795,"HFA S M":0.04709,"BMI L F":-1.4567,"BMI M F":17.3044,"BMI S F":0.12782,"BMI L M":-1.7873,"BMI M M":16.985,"BMI S M":0.1111,"Referencia":"OMS 2007"},{"Mes":134,"HFA L F":1.0,"HFA M F":146.0622,"HFA S F":0.04576,"HFA L M":1.0,"HFA M M":144.0511,"HFA S M":0.04714,"BMI L F":-1.4526,"BMI M F":17.3637,"BMI S F":0.12816,"BMI L M":-1.7881,"BMI M M":17.0314,"BMI S M":0.1115,"Referencia":"OMS 2007"},{"Mes":135,"HFA L F":1.0,"HFA M F":146.5951,"HFA S F":0.04571,"HFA L M":1.0,"HFA M M":144.5276,"HFA S M":0.04719,"BMI L F":-1.4482,"BMI M F":17.4238,"BMI S F":0.12849,"BMI L M":-1.7884,"BMI M M":17.0784,"BMI S M":0.11189,"Referencia":"OMS 2007"},{"Mes":136,"HFA L F":1.0,"HFA M F":147.1262,"HFA S F":0.04567,"HFA L M":1.0,"HFA M M":145.0093,"HFA S M":0.04723,"BMI L F":-1.4436,"BMI M F":17.4847,"BMI S F":0.12882,"BMI L M":-1.7884,"BMI M M":17.1262,"BMI S M":0.11228,"Referencia":"OMS 2007"},{"Mes":137,"HFA L F":1.0,"HFA M F":147.6548,"HFA S F":0.04562,"HFA L M":1.0,"HFA M M":145.4964,"HFA S M":0.04728,"BMI L F":-1.4389,"BMI M F":17.5464,"BMI S F":0.12914,"BMI L M":-1.788,"BMI M M":17.1746,"BMI S M":0.11266,"Referencia":"OMS 2007"},{"Mes":138,"HFA L F":1.0,"HFA M F":148.1804,"HFA S F":0.04557,"HFA L M":1.0,"HFA M M":145.9891,"HFA S M":0.04732,"BMI L F":-1.4339,"BMI M F":17.6088,"BMI S F":0.12946,"BMI L M":-1.7873,"BMI M M":17.2236,"BMI S M":0.11304,"Referencia":"OMS 2007"},{"Mes":139,"HFA L F":1.0,"HFA M F":148.7023,"HFA S F":0.04552,"HFA L M":1.0,"HFA M M":146.4878,"HFA S M":0.04736,"BMI L F":-1.4288,"BMI M F":17.6719,"BMI S F":0.12978,"BMI L M":-1.7861,"BMI M M":17.2734,"BMI S M":0.11342,"Referencia":"OMS 2007"},{"Mes":140,"HFA L F":1.0,"HFA M F":149.2197,"HFA S F":0.04546,"HFA L M":1.0,"HFA M M":146.9927,"HFA S M":0.0474,"BMI L F":-1.4235,"BMI M F":17.7357,"BMI S F":0.13009,"BMI L M":-1.7846,"BMI M M":17.324,"BMI S M":0.11379,"Referencia":"OMS 2007"},{"Mes":141,"HFA L F":1.0,"HFA M F":149.7322,"HFA S F":0.04541,"HFA L M":1.0,"HFA M M":147.5041,"HFA S M":0.04744,"BMI L F":-1.418,"BMI M F":17.8001,"BMI S F":0.1304,"BMI L M":-1.7828,"BMI M M":17.3752,"BMI S M":0.11415,"Referencia":"OMS 2007"},{"Mes":142,"HFA L F":1.0,"HFA M F":150.239,"HFA S F":0.04535,"HFA L M":1.0,"HFA M M":148.0224,"HFA S M":0.04747,"BMI L F":-1.4123,"BMI M F":17.8651,"BMI S F":0.1307,"BMI L M":-1.7806,"BMI M M":17.4272,"BMI S M":0.11451,"Referencia":"OMS 2007"},{"Mes":143,"HFA L F":1.0,"HFA M F":150.7394,"HFA S F":0.04529,"HFA L M":1.0,"HFA M M":148.5478,"HFA S M":0.0475,"BMI L F":-1.4065,"BMI M F":17.9306,"BMI S F":0.13099,"BMI L M":-1.778,"BMI M M":17.4799,"BMI S M":0.11487,"Referencia":"OMS 2007"},{"Mes":144,"HFA L F":1.0,"HFA M F":151.2327,"HFA S F":0.04523,"HFA L M":1.0,"HFA M M":149.0807,"HFA S M":0.04753,"BMI L F":-1.4006,"BMI M F":17.9966,"BMI S F":0.13129,"BMI L M":-1.7751,"BMI M M":17.5334,"BMI S M":0.11522,"Referencia":"OMS 2007"},{"Mes":145,"HFA L F":1.0,"HFA M F":151.7182,"HFA S F":0.04516,"HFA L M":1.0,"HFA M M":149.6212,"HFA S M":0.04755,"BMI L F":-1.3945,"BMI M F":18.063,"BMI S F":0.13158,"BMI L M":-1.7719,"BMI M M":17.5877,"BMI S M":0.11556,"Referencia":"OMS 2007"},{"Mes":146,"HFA L F":1.0,"HFA M F":152.1951,"HFA S F":0.0451,"HFA L M":1.0,"HFA M M":150.1694,"HFA S M":0.04758,"BMI L F":-1.3883,"BMI M F":18.1297,"BMI S F":0.13186,"BMI L M":-1.7684,"BMI M M":17.6427,"BMI S M":0.1159,"Referencia":"OMS 2007"},{"Mes":147,"HFA L F":1.0,"HFA M F":152.6628,"HFA S F":0.04503,"HFA L M":1.0,"HFA M M":150.7256,"HFA S M":0.04759,"BMI L F":-1.3819,"BMI M F":18.1967,"BMI S F":0.13214,"BMI L M":-1.7645,"BMI M M":17.6985,"BMI S M":0.11623,"Referencia":"OMS 2007"},{"Mes":148,"HFA L F":1.0,"HFA M F":153.1206,"HFA S F":0.04497,"HFA L M":1.0,"HFA M M":151.2899,"HFA S M":0.04761,"BMI L F":-1.3755,"BMI M F":18.2639,"BMI S F":0.13241,"BMI L M":-1.7604,"BMI M M":17.7551,"BMI S M":0.11656,"Referencia":"OMS 2007"},{"Mes":149,"HFA L F":1.0,"HFA M F":153.5678,"HFA S F":0.0449,"HFA L M":1.0,"HFA M M":151.8623,"HFA S M":0.04762,"BMI L F":-1.3689,"BMI M F":18.3312,"BMI S F":0.13268,"BMI L M":-1.7559,"BMI M M":17.8124,"BMI S M":0.11688,"Referencia":"OMS 2007"},{"Mes":150,"HFA L F":1.0,"HFA M F":154.0041,"HFA S F":0.04483,"HFA L M":1.0,"HFA M M":152.4425,"HFA S M":0.04763,"BMI L F":-1.3621,"BMI M F":18.3986,"BMI S F":0.13295,"BMI L M":-1.7511,"BMI M M":17.8704,"BMI S M":0.1172,"Referencia":"OMS 2007"},{"Mes":151,"HFA L F":1.0,"HFA M F":154.429,"HFA S F":0.04476,"HFA L M":1.0,"HFA M M":153.0298,"HFA S M":0.04763,"BMI L F":-1.3553,"BMI M F":18.466,"BMI S F":0.13321,"BMI L M":-1.7461,"BMI M M":17.9292,"BMI S M":0.11751,"Referencia":"OMS 2007"},{"Mes":152,"HFA L F":1.0,"HFA M F":154.8423,"HFA S F":0.04468,"HFA L M":1.0,"HFA M M":153.6234,"HFA S M":0.04764,"BMI L F":-1.3483,"BMI M F":18.5333,"BMI S F":0.13347,"BMI L M":-1.7408,"BMI M M":17.9887,"BMI S M":0.11781,"Referencia":"OMS 2007"},{"Mes":153,"HFA L F":1.0,"HFA M F":155.2437,"HFA S F":0.04461,"HFA L M":1.0,"HFA M M":154.2223,"HFA S M":0.04763,"BMI L F":-1.3413,"BMI M F":18.6006,"BMI S F":0.13372,"BMI L M":-1.7352,"BMI M M":18.0488,"BMI S M":0.11811,"Referencia":"OMS 2007"},{"Mes":154,"HFA L F":1.0,"HFA M F":155.633,"HFA S F":0.04454,"HFA L M":1.0,"HFA M M":154.8258,"HFA S M":0.04763,"BMI L F":-1.3341,"BMI M F":18.6677,"BMI S F":0.13397,"BMI L M":-1.7293,"BMI M M":18.1096,"BMI S M":0.11841,"Referencia":"OMS 2007"},{"Mes":155,"HFA L F":1.0,"HFA M F":156.0101,"HFA S F":0.04446,"HFA L M":1.0,"HFA M M":155.4329,"HFA S M":0.04762,"BMI L F":-1.3269,"BMI M F":18.7346,"BMI S F":0.13421,"BMI L M":-1.7232,"BMI M M":18.171,"BMI S M":0.11869,"Referencia":"OMS 2007"},{"Mes":156,"HFA L F":1.0,"HFA M F":156.3748,"HFA S F":0.04439,"HFA L M":1.0,"HFA M M":156.0426,"HFA S M":0.0476,"BMI L F":-1.3195,"BMI M F":18.8012,"BMI S F":0.13445,"BMI L M":-1.7168,"BMI M M":18.233,"BMI S M":0.11898,"Referencia":"OMS 2007"},{"Mes":157,"HFA L F":1.0,"HFA M F":156.7269,"HFA S F":0.04431,"HFA L M":1.0,"HFA M M":156.6539,"HFA S M":0.04758,"BMI L F":-1.3121,"BMI M F":18.8675,"BMI S F":0.13469,"BMI L M":-1.7102,"BMI M M":18.2955,"BMI S M":0.11925,"Referencia":"OMS 2007"},{"Mes":158,"HFA L F":1.0,"HFA M F":157.0666,"HFA S F":0.04423,"HFA L M":1.0,"HFA M M":157.266,"HFA S M":0.04756,"BMI L F":-1.3046,"BMI M F":18.9335,"BMI S F":0.13492,"BMI L M":-1.7033,"BMI M M":18.3586,"BMI S M":0.11952,"Referencia":"OMS 2007"},{"Mes":159,"HFA L F":1.0,"HFA M F":157.3936,"HFA S F":0.04415,"HFA L M":1.0,"HFA M M":157.8775,"HFA S M":0.04754,"BMI L F":-1.297,"BMI M F":18.9991,"BMI S F":0.13514,"BMI L M":-1.6962,"BMI M M":18.4221,"BMI S M":0.11979,"Referencia":"OMS 2007"},{"Mes":160,"HFA L F":1.0,"HFA M F":157.7082,"HFA S F":0.04408,"HFA L M":1.0,"HFA M M":158.4871,"HFA S M":0.04751,"BMI L F":-1.2894,"BMI M F":19.0642,"BMI S F":0.13537,"BMI L M":-1.6888,"BMI M M":18.486,"BMI S M":0.12005,"Referencia":"OMS 2007"},{"Mes":161,"HFA L F":1.0,"HFA M F":158.0102,"HFA S F":0.044,"HFA L M":1.0,"HFA M M":159.0937,"HFA S M":0.04747,"BMI L F":-1.2816,"BMI M F":19.1289,"BMI S F":0.13559,"BMI L M":-1.6811,"BMI M M":18.5502,"BMI S M":0.1203,"Referencia":"OMS 2007"},{"Mes":162,"HFA L F":1.0,"HFA M F":158.2997,"HFA S F":0.04392,"HFA L M":1.0,"HFA M M":159.6962,"HFA S M":0.04744,"BMI L F":-1.2739,"BMI M F":19.1931,"BMI S F":0.1358,"BMI L M":-1.6732,"BMI M M":18.6148,"BMI S M":0.12055,"Referencia":"OMS 2007"},{"Mes":163,"HFA L F":1.0,"HFA M F":158.5771,"HFA S F":0.04384,"HFA L M":1.0,"HFA M M":160.2939,"HFA S M":0.0474,"BMI L F":-1.2661,"BMI M F":19.2567,"BMI S F":0.13601,"BMI L M":-1.6651,"BMI M M":18.6795,"BMI S M":0.12079,"Referencia":"OMS 2007"},{"Mes":164,"HFA L F":1.0,"HFA M F":158.8425,"HFA S F":0.04376,"HFA L M":1.0,"HFA M M":160.8861,"HFA S M":0.04735,"BMI L F":-1.2583,"BMI M F":19.3197,"BMI S F":0.13622,"BMI L M":-1.6568,"BMI M M":18.7445,"BMI S M":0.12102,"Referencia":"OMS 2007"},{"Mes":165,"HFA L F":1.0,"HFA M F":159.0961,"HFA S F":0.04369,"HFA L M":1.0,"HFA M M":161.472,"HFA S M":0.0473,"BMI L F":-1.2504,"BMI M F":19.382,"BMI S F":0.13642,"BMI L M":-1.6482,"BMI M M":18.8095,"BMI S M":0.12125,"Referencia":"OMS 2007"},{"Mes":166,"HFA L F":1.0,"HFA M F":159.3382,"HFA S F":0.04361,"HFA L M":1.0,"HFA M M":162.0505,"HFA S M":0.04725,"BMI L F":-1.2425,"BMI M F":19.4437,"BMI S F":0.13662,"BMI L M":-1.6394,"BMI M M":18.8746,"BMI S M":0.12148,"Referencia":"OMS 2007"},{"Mes":167,"HFA L F":1.0,"HFA M F":159.5691,"HFA S F":0.04353,"HFA L M":1.0,"HFA M M":162.6207,"HFA S M":0.0472,"BMI L F":-1.2345,"BMI M F":19.5045,"BMI S F":0.13681,"BMI L M":-1.6304,"BMI M M":18.9398,"BMI S M":0.1217,"Referencia":"OMS 2007"},{"Mes":168,"HFA L F":1.0,"HFA M F":159.789,"HFA S F":0.04345,"HFA L M":1.0,"HFA M M":163.1816,"HFA S M":0.04714,"BMI L F":-1.2266,"BMI M F":19.5647,"BMI S F":0.137,"BMI L M":-1.6211,"BMI M M":19.005,"BMI S M":0.12191,"Referencia":"OMS 2007"},{"Mes":169,"HFA L F":1.0,"HFA M F":159.9983,"HFA S F":0.04337,"HFA L M":1.0,"HFA M M":163.7321,"HFA S M":0.04707,"BMI L F":-1.2186,"BMI M F":19.624,"BMI S F":0.13719,"BMI L M":-1.6116,"BMI M M":19.0701,"BMI S M":0.12212,"Referencia":"OMS 2007"},{"Mes":170,"HFA L F":1.0,"HFA M F":160.1971,"HFA S F":0.0433,"HFA L M":1.0,"HFA M M":164.2717,"HFA S M":0.04701,"BMI L F":-1.2107,"BMI M F":19.6824,"BMI S F":0.13738,"BMI L M":-1.602,"BMI M M":19.1351,"BMI S M":0.12233,"Referencia":"OMS 2007"},{"Mes":171,"HFA L F":1.0,"HFA M F":160.3857,"HFA S F":0.04322,"HFA L M":1.0,"HFA M M":164.7994,"HFA S M":0.04694,"BMI L F":-1.2027,"BMI M F":19.74,"BMI S F":0.13756,"BMI L M":-1.5921,"BMI M M":19.2,"BMI S M":0.12253,"Referencia":"OMS 2007"},{"Mes":172,"HFA L F":1.0,"HFA M F":160.5643,"HFA S F":0.04314,"HFA L M":1.0,"HFA M M":165.3145,"HFA S M":0.04687,"BMI L F":-1.1947,"BMI M F":19.7966,"BMI S F":0.13774,"BMI L M":-1.5821,"BMI M M":19.2648,"BMI S M":0.12272,"Referencia":"OMS 2007"},{"Mes":173,"HFA L F":1.0,"HFA M F":160.7332,"HFA S F":0.04307,"HFA L M":1.0,"HFA M M":165.8165,"HFA S M":0.04679,"BMI L F":-1.1867,"BMI M F":19.8523,"BMI S F":0.13791,"BMI L M":-1.5719,"BMI M M":19.3294,"BMI S M":0.12291,"Referencia":"OMS 2007"},{"Mes":174,"HFA L F":1.0,"HFA M F":160.8927,"HFA S F":0.04299,"HFA L M":1.0,"HFA M M":166.305,"HFA S M":0.04671,"BMI L F":-1.1788,"BMI M F":19.907,"BMI S F":0.13808,"BMI L M":-1.5615,"BMI M M":19.3937,"BMI S M":0.1231,"Referencia":"OMS 2007"},{"Mes":175,"HFA L F":1.0,"HFA M F":161.043,"HFA S F":0.04292,"HFA L M":1.0,"HFA M M":166.7799,"HFA S M":0.04663,"BMI L F":-1.1708,"BMI M F":19.9607,"BMI S F":0.13825,"BMI L M":-1.551,"BMI M M":19.4578,"BMI S M":0.12328,"Referencia":"OMS 2007"},{"Mes":176,"HFA L F":1.0,"HFA M F":161.1845,"HFA S F":0.04284,"HFA L M":1.0,"HFA M M":167.2415,"HFA S M":0.04655,"BMI L F":-1.1629,"BMI M F":20.0133,"BMI S F":0.13841,"BMI L M":-1.5403,"BMI M M":19.5217,"BMI S M":0.12346,"Referencia":"OMS 2007"},{"Mes":177,"HFA L F":1.0,"HFA M F":161.3176,"HFA S F":0.04277,"HFA L M":1.0,"HFA M M":167.6899,"HFA S M":0.04646,"BMI L F":-1.1549,"BMI M F":20.0648,"BMI S F":0.13858,"BMI L M":-1.5294,"BMI M M":19.5853,"BMI S M":0.12363,"Referencia":"OMS 2007"},{"Mes":178,"HFA L F":1.0,"HFA M F":161.4425,"HFA S F":0.0427,"HFA L M":1.0,"HFA M M":168.1255,"HFA S M":0.04637,"BMI L F":-1.147,"BMI M F":20.1152,"BMI S F":0.13873,"BMI L M":-1.5185,"BMI M M":19.6486,"BMI S M":0.1238,"Referencia":"OMS 2007"},{"Mes":179,"HFA L F":1.0,"HFA M F":161.5596,"HFA S F":0.04263,"HFA L M":1.0,"HFA M M":168.5482,"HFA S M":0.04628,"BMI L F":-1.139,"BMI M F":20.1644,"BMI S F":0.13889,"BMI L M":-1.5074,"BMI M M":19.7117,"BMI S M":0.12396,"Referencia":"OMS 2007"},{"Mes":180,"HFA L F":1.0,"HFA M F":161.6692,"HFA S F":0.04255,"HFA L M":1.0,"HFA M M":168.958,"HFA S M":0.04619,"BMI L F":-1.1311,"BMI M F":20.2125,"BMI S F":0.13904,"BMI L M":-1.4961,"BMI M M":19.7744,"BMI S M":0.12412,"Referencia":"OMS 2007"},{"Mes":181,"HFA L F":1.0,"HFA M F":161.7717,"HFA S F":0.04248,"HFA L M":1.0,"HFA M M":169.3549,"HFA S M":0.04609,"BMI L F":-1.1232,"BMI M F":20.2595,"BMI S F":0.1392,"BMI L M":-1.4848,"BMI M M":19.8367,"BMI S M":0.12428,"Referencia":"OMS 2007"},{"Mes":182,"HFA L F":1.0,"HFA M F":161.8673,"HFA S F":0.04241,"HFA L M":1.0,"HFA M M":169.7389,"HFA S M":0.04599,"BMI L F":-1.1153,"BMI M F":20.3053,"BMI S F":0.13934,"BMI L M":-1.4733,"BMI M M":19.8987,"BMI S M":0.12443,"Referencia":"OMS 2007"},{"Mes":183,"HFA L F":1.0,"HFA M F":161.9564,"HFA S F":0.04235,"HFA L M":1.0,"HFA M M":170.1099,"HFA S M":0.04589,"BMI L F":-1.1074,"BMI M F":20.3499,"BMI S F":0.13949,"BMI L M":-1.4617,"BMI M M":19.9603,"BMI S M":0.12458,"Referencia":"OMS 2007"},{"Mes":184,"HFA L F":1.0,"HFA M F":162.0393,"HFA S F":0.04228,"HFA L M":1.0,"HFA M M":170.468,"HFA S M":0.04579,"BMI L F":-1.0996,"BMI M F":20.3934,"BMI S F":0.13963,"BMI L M":-1.45,"BMI M M":20.0215,"BMI S M":0.12473,"Referencia":"OMS 2007"},{"Mes":185,"HFA L F":1.0,"HFA M F":162.1164,"HFA S F":0.04221,"HFA L M":1.0,"HFA M M":170.8136,"HFA S M":0.04569,"BMI L F":-1.0917,"BMI M F":20.4357,"BMI S F":0.13977,"BMI L M":-1.4382,"BMI M M":20.0823,"BMI S M":0.12487,"Referencia":"OMS 2007"},{"Mes":186,"HFA L F":1.0,"HFA M F":162.188,"HFA S F":0.04214,"HFA L M":1.0,"HFA M M":171.1468,"HFA S M":0.04559,"BMI L F":-1.0838,"BMI M F":20.4769,"BMI S F":0.13991,"BMI L M":-1.4263,"BMI M M":20.1427,"BMI S M":0.12501,"Referencia":"OMS 2007"},{"Mes":187,"HFA L F":1.0,"HFA M F":162.2542,"HFA S F":0.04208,"HFA L M":1.0,"HFA M M":171.468,"HFA S M":0.04548,"BMI L F":-1.076,"BMI M F":20.517,"BMI S F":0.14005,"BMI L M":-1.4143,"BMI M M":20.2026,"BMI S M":0.12514,"Referencia":"OMS 2007"},{"Mes":188,"HFA L F":1.0,"HFA M F":162.3154,"HFA S F":0.04201,"HFA L M":1.0,"HFA M M":171.7773,"HFA S M":0.04538,"BMI L F":-1.0681,"BMI M F":20.556,"BMI S F":0.14018,"BMI L M":-1.4022,"BMI M M":20.2621,"BMI S M":0.12528,"Referencia":"OMS 2007"},{"Mes":189,"HFA L F":1.0,"HFA M F":162.3719,"HFA S F":0.04195,"HFA L M":1.0,"HFA M M":172.0748,"HFA S M":0.04527,"BMI L F":-1.0603,"BMI M F":20.5938,"BMI S F":0.14031,"BMI L M":-1.39,"BMI M M":20.3211,"BMI S M":0.12541,"Referencia":"OMS 2007"},{"Mes":190,"HFA L F":1.0,"HFA M F":162.4239,"HFA S F":0.04189,"HFA L M":1.0,"HFA M M":172.3606,"HFA S M":0.04516,"BMI L F":-1.0525,"BMI M F":20.6306,"BMI S F":0.14044,"BMI L M":-1.3777,"BMI M M":20.3796,"BMI S M":0.12554,"Referencia":"OMS 2007"},{"Mes":191,"HFA L F":1.0,"HFA M F":162.4717,"HFA S F":0.04182,"HFA L M":1.0,"HFA M M":172.6345,"HFA S M":0.04506,"BMI L F":-1.0447,"BMI M F":20.6663,"BMI S F":0.14057,"BMI L M":-1.3653,"BMI M M":20.4376,"BMI S M":0.12567,"Referencia":"OMS 2007"},{"Mes":192,"HFA L F":1.0,"HFA M F":162.5156,"HFA S F":0.04176,"HFA L M":1.0,"HFA M M":172.8967,"HFA S M":0.04495,"BMI L F":-1.0368,"BMI M F":20.7008,"BMI S F":0.1407,"BMI L M":-1.3529,"BMI M M":20.4951,"BMI S M":0.12579,"Referencia":"OMS 2007"},{"Mes":193,"HFA L F":1.0,"HFA M F":162.556,"HFA S F":0.0417,"HFA L M":1.0,"HFA M M":173.147,"HFA S M":0.04484,"BMI L F":-1.029,"BMI M F":20.7344,"BMI S F":0.14082,"BMI L M":-1.3403,"BMI M M":20.5521,"BMI S M":0.12591,"Referencia":"OMS 2007"},{"Mes":194,"HFA L F":1.0,"HFA M F":162.5933,"HFA S F":0.04164,"HFA L M":1.0,"HFA M M":173.3856,"HFA S M":0.04473,"BMI L F":-1.0212,"BMI M F":20.7668,"BMI S F":0.14094,"BMI L M":-1.3277,"BMI M M":20.6085,"BMI S M":0.12603,"Referencia":"OMS 2007"},{"Mes":195,"HFA L F":1.0,"HFA M F":162.6276,"HFA S F":0.04158,"HFA L M":1.0,"HFA M M":173.6126,"HFA S M":0.04462,"BMI L F":-1.0134,"BMI M F":20.7982,"BMI S F":0.14106,"BMI L M":-1.3149,"BMI M M":20.6644,"BMI S M":0.12615,"Referencia":"OMS 2007"},{"Mes":196,"HFA L F":1.0,"HFA M F":162.6594,"HFA S F":0.04152,"HFA L M":1.0,"HFA M M":173.828,"HFA S M":0.04451,"BMI L F":-1.0055,"BMI M F":20.8286,"BMI S F":0.14118,"BMI L M":-1.3021,"BMI M M":20.7197,"BMI S M":0.12627,"Referencia":"OMS 2007"},{"Mes":197,"HFA L F":1.0,"HFA M F":162.689,"HFA S F":0.04147,"HFA L M":1.0,"HFA M M":174.0321,"HFA S M":0.0444,"BMI L F":-0.9977,"BMI M F":20.858,"BMI S F":0.1413,"BMI L M":-1.2892,"BMI M M":20.7745,"BMI S M":0.12638,"Referencia":"OMS 2007"},{"Mes":198,"HFA L F":1.0,"HFA M F":162.7165,"HFA S F":0.04141,"HFA L M":1.0,"HFA M M":174.2251,"HFA S M":0.04429,"BMI L F":-0.9898,"BMI M F":20.8863,"BMI S F":0.14142,"BMI L M":-1.2762,"BMI M M":20.8287,"BMI S M":0.1265,"Referencia":"OMS 2007"},{"Mes":199,"HFA L F":1.0,"HFA M F":162.7425,"HFA S F":0.04136,"HFA L M":1.0,"HFA M M":174.4071,"HFA S M":0.04418,"BMI L F":-0.9819,"BMI M F":20.9137,"BMI S F":0.14153,"BMI L M":-1.2631,"BMI M M":20.8824,"BMI S M":0.12661,"Referencia":"OMS 2007"},{"Mes":200,"HFA L F":1.0,"HFA M F":162.767,"HFA S F":0.0413,"HFA L M":1.0,"HFA M M":174.5784,"HFA S M":0.04407,"BMI L F":-0.974,"BMI M F":20.9401,"BMI S F":0.14164,"BMI L M":-1.2499,"BMI M M":20.9355,"BMI S M":0.12672,"Referencia":"OMS 2007"},{"Mes":201,"HFA L F":1.0,"HFA M F":162.7904,"HFA S F":0.04125,"HFA L M":1.0,"HFA M M":174.7392,"HFA S M":0.04396,"BMI L F":-0.9661,"BMI M F":20.9656,"BMI S F":0.14176,"BMI L M":-1.2366,"BMI M M":20.9881,"BMI S M":0.12683,"Referencia":"OMS 2007"},{"Mes":202,"HFA L F":1.0,"HFA M F":162.8126,"HFA S F":0.04119,"HFA L M":1.0,"HFA M M":174.8896,"HFA S M":0.04385,"BMI L F":-0.9582,"BMI M F":20.9901,"BMI S F":0.14187,"BMI L M":-1.2233,"BMI M M":21.04,"BMI S M":0.12694,"Referencia":"OMS 2007"},{"Mes":203,"HFA L F":1.0,"HFA M F":162.834,"HFA S F":0.04114,"HFA L M":1.0,"HFA M M":175.0301,"HFA S M":0.04375,"BMI L F":-0.9503,"BMI M F":21.0138,"BMI S F":0.14198,"BMI L M":-1.2098,"BMI M M":21.0914,"BMI S M":0.12704,"Referencia":"OMS 2007"},{"Mes":204,"HFA L F":1.0,"HFA M F":162.8545,"HFA S F":0.04109,"HFA L M":1.0,"HFA M M":175.1609,"HFA S M":0.04364,"BMI L F":-0.9423,"BMI M F":21.0367,"BMI S F":0.14208,"BMI L M":-1.1962,"BMI M M":21.1423,"BMI S M":0.12715,"Referencia":"OMS 2007"},{"Mes":205,"HFA L F":1.0,"HFA M F":162.8743,"HFA S F":0.04104,"HFA L M":1.0,"HFA M M":175.2824,"HFA S M":0.04353,"BMI L F":-0.9344,"BMI M F":21.0587,"BMI S F":0.14219,"BMI L M":-1.1826,"BMI M M":21.1925,"BMI S M":0.12726,"Referencia":"OMS 2007"},{"Mes":206,"HFA L F":1.0,"HFA M F":162.8935,"HFA S F":0.04099,"HFA L M":1.0,"HFA M M":175.3951,"HFA S M":0.04343,"BMI L F":-0.9264,"BMI M F":21.0801,"BMI S F":0.1423,"BMI L M":-1.1688,"BMI M M":21.2423,"BMI S M":0.12736,"Referencia":"OMS 2007"},{"Mes":207,"HFA L F":1.0,"HFA M F":162.912,"HFA S F":0.04094,"HFA L M":1.0,"HFA M M":175.4995,"HFA S M":0.04332,"BMI L F":-0.9184,"BMI M F":21.1007,"BMI S F":0.1424,"BMI L M":-1.155,"BMI M M":21.2914,"BMI S M":0.12746,"Referencia":"OMS 2007"},{"Mes":208,"HFA L F":1.0,"HFA M F":162.93,"HFA S F":0.04089,"HFA L M":1.0,"HFA M M":175.5959,"HFA S M":0.04322,"BMI L F":-0.9104,"BMI M F":21.1206,"BMI S F":0.1425,"BMI L M":-1.141,"BMI M M":21.34,"BMI S M":0.12756,"Referencia":"OMS 2007"},{"Mes":209,"HFA L F":1.0,"HFA M F":162.9476,"HFA S F":0.04084,"HFA L M":1.0,"HFA M M":175.685,"HFA S M":0.04311,"BMI L F":-0.9024,"BMI M F":21.1399,"BMI S F":0.14261,"BMI L M":-1.127,"BMI M M":21.388,"BMI S M":0.12767,"Referencia":"OMS 2007"},{"Mes":210,"HFA L F":1.0,"HFA M F":162.9649,"HFA S F":0.0408,"HFA L M":1.0,"HFA M M":175.7672,"HFA S M":0.04301,"BMI L F":-0.8944,"BMI M F":21.1586,"BMI S F":0.14271,"BMI L M":-1.1129,"BMI M M":21.4354,"BMI S M":0.12777,"Referencia":"OMS 2007"},{"Mes":211,"HFA L F":1.0,"HFA M F":162.9817,"HFA S F":0.04075,"HFA L M":1.0,"HFA M M":175.8432,"HFA S M":0.04291,"BMI L F":-0.8863,"BMI M F":21.1768,"BMI S F":0.14281,"BMI L M":-1.0986,"BMI M M":21.4822,"BMI S M":0.12787,"Referencia":"OMS 2007"},{"Mes":212,"HFA L F":1.0,"HFA M F":162.9983,"HFA S F":0.04071,"HFA L M":1.0,"HFA M M":175.9133,"HFA S M":0.04281,"BMI L F":-0.8783,"BMI M F":21.1944,"BMI S F":0.14291,"BMI L M":-1.0843,"BMI M M":21.5285,"BMI S M":0.12797,"Referencia":"OMS 2007"},{"Mes":213,"HFA L F":1.0,"HFA M F":163.0144,"HFA S F":0.04066,"HFA L M":1.0,"HFA M M":175.9781,"HFA S M":0.04271,"BMI L F":-0.8703,"BMI M F":21.2116,"BMI S F":0.14301,"BMI L M":-1.0699,"BMI M M":21.5742,"BMI S M":0.12807,"Referencia":"OMS 2007"},{"Mes":214,"HFA L F":1.0,"HFA M F":163.03,"HFA S F":0.04062,"HFA L M":1.0,"HFA M M":176.038,"HFA S M":0.04261,"BMI L F":-0.8623,"BMI M F":21.2282,"BMI S F":0.14311,"BMI L M":-1.0553,"BMI M M":21.6193,"BMI S M":0.12816,"Referencia":"OMS 2007"},{"Mes":215,"HFA L F":1.0,"HFA M F":163.0451,"HFA S F":0.04058,"HFA L M":1.0,"HFA M M":176.0935,"HFA S M":0.04251,"BMI L F":-0.8542,"BMI M F":21.2444,"BMI S F":0.1432,"BMI L M":-1.0407,"BMI M M":21.6638,"BMI S M":0.12826,"Referencia":"OMS 2007"},{"Mes":216,"HFA L F":1.0,"HFA M F":163.0595,"HFA S F":0.04053,"HFA L M":1.0,"HFA M M":176.1449,"HFA S M":0.04241,"BMI L F":-0.8462,"BMI M F":21.2603,"BMI S F":0.1433,"BMI L M":-1.026,"BMI M M":21.7077,"BMI S M":0.12836,"Referencia":"OMS 2007"},{"Mes":217,"HFA L F":1.0,"HFA M F":163.0733,"HFA S F":0.04049,"HFA L M":1.0,"HFA M M":176.1925,"HFA S M":0.04232,"BMI L F":-0.8382,"BMI M F":21.2757,"BMI S F":0.1434,"BMI L M":-1.0112,"BMI M M":21.751,"BMI S M":0.12845,"Referencia":"OMS 2007"},{"Mes":218,"HFA L F":1.0,"HFA M F":163.0862,"HFA S F":0.04045,"HFA L M":1.0,"HFA M M":176.2368,"HFA S M":0.04222,"BMI L F":-0.8301,"BMI M F":21.2908,"BMI S F":0.14349,"BMI L M":-0.9962,"BMI M M":21.7937,"BMI S M":0.12855,"Referencia":"OMS 2007"},{"Mes":219,"HFA L F":1.0,"HFA M F":163.0982,"HFA S F":0.04041,"HFA L M":1.0,"HFA M M":176.2779,"HFA S M":0.04213,"BMI L F":-0.8221,"BMI M F":21.3055,"BMI S F":0.14359,"BMI L M":-0.9812,"BMI M M":21.8358,"BMI S M":0.12864,"Referencia":"OMS 2007"},{"Mes":220,"HFA L F":1.0,"HFA M F":163.1092,"HFA S F":0.04037,"HFA L M":1.0,"HFA M M":176.3162,"HFA S M":0.04204,"BMI L F":-0.814,"BMI M F":21.32,"BMI S F":0.14368,"BMI L M":-0.9661,"BMI M M":21.8773,"BMI S M":0.12874,"Referencia":"OMS 2007"},{"Mes":221,"HFA L F":1.0,"HFA M F":163.1192,"HFA S F":0.04034,"HFA L M":1.0,"HFA M M":176.3518,"HFA S M":0.04195,"BMI L F":-0.806,"BMI M F":21.3341,"BMI S F":0.14377,"BMI L M":-0.9509,"BMI M M":21.9182,"BMI S M":0.12883,"Referencia":"OMS 2007"},{"Mes":222,"HFA L F":1.0,"HFA M F":163.1279,"HFA S F":0.0403,"HFA L M":1.0,"HFA M M":176.3851,"HFA S M":0.04185,"BMI L F":-0.798,"BMI M F":21.348,"BMI S F":0.14386,"BMI L M":-0.9356,"BMI M M":21.9585,"BMI S M":0.12893,"Referencia":"OMS 2007"},{"Mes":223,"HFA L F":1.0,"HFA M F":163.1355,"HFA S F":0.04026,"HFA L M":1.0,"HFA M M":176.4162,"HFA S M":0.04177,"BMI L F":-0.7899,"BMI M F":21.3617,"BMI S F":0.14396,"BMI L M":-0.9202,"BMI M M":21.9982,"BMI S M":0.12902,"Referencia":"OMS 2007"},{"Mes":224,"HFA L F":1.0,"HFA M F":163.1418,"HFA S F":0.04023,"HFA L M":1.0,"HFA M M":176.4453,"HFA S M":0.04168,"BMI L F":-0.7819,"BMI M F":21.3752,"BMI S F":0.14405,"BMI L M":-0.9048,"BMI M M":22.0374,"BMI S M":0.12911,"Referencia":"OMS 2007"},{"Mes":225,"HFA L F":1.0,"HFA M F":163.1469,"HFA S F":0.04019,"HFA L M":1.0,"HFA M M":176.4724,"HFA S M":0.04159,"BMI L F":-0.7738,"BMI M F":21.3884,"BMI S F":0.14414,"BMI L M":-0.8892,"BMI M M":22.076,"BMI S M":0.1292,"Referencia":"OMS 2007"},{"Mes":226,"HFA L F":1.0,"HFA M F":163.1508,"HFA S F":0.04016,"HFA L M":1.0,"HFA M M":176.4976,"HFA S M":0.0415,"BMI L F":-0.7658,"BMI M F":21.4014,"BMI S F":0.14423,"BMI L M":-0.8735,"BMI M M":22.114,"BMI S M":0.1293,"Referencia":"OMS 2007"},{"Mes":227,"HFA L F":1.0,"HFA M F":163.1534,"HFA S F":0.04012,"HFA L M":1.0,"HFA M M":176.5211,"HFA S M":0.04142,"BMI L F":-0.7577,"BMI M F":21.4143,"BMI S F":0.14432,"BMI L M":-0.8578,"BMI M M":22.1514,"BMI S M":0.12939,"Referencia":"OMS 2007"},{"Mes":228,"HFA L F":1.0,"HFA M F":163.1548,"HFA S F":0.04009,"HFA L M":1.0,"HFA M M":176.5432,"HFA S M":0.04134,"BMI L F":-0.7496,"BMI M F":21.4269,"BMI S F":0.14441,"BMI L M":-0.8419,"BMI M M":22.1883,"BMI S M":0.12948,"Referencia":"OMS 2007"}];
+const STORAGE_KEY = "antropometria_oms_somatotipo_v2_projects";
+const LEGACY_STORAGE_KEY = "antropometria_oms_somatotipo_v1";
+let state = {projects:[], patients:[], evaluations:[]};
+
+function uid(prefix="id"){return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8)}
+function todayISO(){return new Date().toISOString().slice(0,10)}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function fmt(v,d=2){return v===null||v===undefined||v===""?"—":Number(v).toFixed(d)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function toast(msg,type="ok"){const el=document.createElement("div");el.textContent=msg;Object.assign(el.style,{position:"fixed",bottom:"20px",left:"50%",transform:"translateX(-50%)",background:type==="bad"?"#991b1b":"#0f766e",color:"#fff",padding:"12px 18px",borderRadius:"12px",zIndex:9999,boxShadow:"0 10px 30px rgba(0,0,0,.2)",maxWidth:"90%",textAlign:"center"});document.body.appendChild(el);setTimeout(()=>el.remove(),2800)}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));renderAll()}
+function load(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY)||localStorage.getItem(LEGACY_STORAGE_KEY);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      let patients=Array.isArray(parsed.patients)?parsed.patients:[];
+      let evaluations=Array.isArray(parsed.evaluations)?parsed.evaluations:[];
+      let projects=Array.isArray(parsed.projects)?parsed.projects:[];
+      if(!projects.length&&(patients.length||evaluations.length)){
+        projects=[{id:"PROY-GENERAL",name:"Proyecto general",academy:"",discipline:"",group:"",description:"Migrado automáticamente"}];
+      }
+      const defaultId=projects[0]?.id||"";
+      evaluations=evaluations.map(e=>{
+        const cleanedAlerts=String(e.alerts||"")
+          .split(";")
+          .map(x=>x.trim())
+          .filter(x=>x&&x!=="Deshidratación severa por gravedad específica");
+        return{
+          ...e,
+          projectId:e.projectId||defaultId,
+          alerts:cleanedAlerts.length?cleanedAlerts.join("; "):"OK"
+        };
+      });
+      patients=patients.map(p=>{
+        const firstEvaluation=evaluations.find(e=>e.patientId===p.id);
+        return {...p,projectId:p.projectId||firstEvaluation?.projectId||defaultId};
+      });
+      // La relación del participante prevalece para mantener un único proyecto.
+      evaluations=evaluations.map(e=>{
+        const patient=patients.find(p=>p.id===e.patientId);
+        return {...e,projectId:patient?.projectId||e.projectId||defaultId};
+      });
+      state={projects,patients,evaluations};
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    }
+  }catch(e){console.error(e)}
+}
+function goTab(name){
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  const activeButton=document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  activeButton?.classList.add("active");
+  const tabs=document.querySelector(".tabs");
+  if(activeButton&&tabs&&window.matchMedia("(max-width:800px)").matches){
+    const targetLeft=activeButton.offsetLeft-(tabs.clientWidth-activeButton.clientWidth)/2;
+    tabs.scrollTo({left:Math.max(0,targetLeft),behavior:"smooth"});
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+  if(name==="proyectos")renderProjects();
+  if(name==="visualizacion")renderProjectView();
+  if(name==="participante")renderParticipantView();
+  if(name==="evaluacion")updateEvaluationPatientOptions();
+}
+document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>goTab(b.dataset.tab)));
+
+function calculateAge(dob, evalDate){
+  if(!dob||!evalDate)return null;
+  const [y1,m1,d1]=dob.split("-").map(Number),[y2,m2,d2]=evalDate.split("-").map(Number);
+  const a=Date.UTC(y1,m1-1,d1),b=Date.UTC(y2,m2-1,d2);
+  if(!Number.isFinite(a)||!Number.isFinite(b)||b<a)return null;
+  const days=Math.round((b-a)/86400000),months=days/30.4375;
+  return {days,months,years:months/12};
+}
+function adjustHeight(height,months,type){
+  height=num(height);if(height===null||height<=0||months===null)return null;
+  if(months<24)return type==="Talla de pie"?height+0.7:height;
+  return type==="Longitud acostado"?height-0.7:height;
+}
+function bmi(weight,height){weight=num(weight);height=num(height);return weight&&height?weight/Math.pow(height/100,2):null}
+function refRow(month){return WHO_REFS[Math.max(0,Math.min(228,month))]}
+function lms(months,sex,indicator){
+  if(months===null||months<0||months>228)return null;
+  const suffix=String(sex).toLowerCase().startsWith("f")?"F":String(sex).toLowerCase().startsWith("m")?"M":null;
+  if(!suffix)return null;
+  const prefix=indicator==="HFA"?"HFA":"BMI",m0=Math.floor(months),m1=Math.min(m0+1,228);
+  let frac=months-m0;if([23,60,228].includes(m0))frac=0;
+  const r0=refRow(m0),r1=refRow(m1);
+  return ["L","M","S"].map(p=>r0[`${prefix} ${p} ${suffix}`]+frac*(r1[`${prefix} ${p} ${suffix}`]-r0[`${prefix} ${p} ${suffix}`]));
+}
+function zLms(value,L,M,S){
+  value=num(value);if(value===null||value<=0||M<=0||S===0)return null;
+  const z=Math.abs(L)<1e-12?Math.log(value/M)/S:(Math.pow(value/M,L)-1)/(L*S);
+  return Number.isFinite(z)?z:null;
+}
+function valueFromLms(z,L,M,S){
+  const v=Math.abs(L)<1e-12?M*Math.exp(z*S):((1+L*S*z)>0?M*Math.pow(1+L*S*z,1/L):null);
+  return Number.isFinite(v)?v:null;
+}
+function zBMI(value,months,sex){
+  const p=lms(months,sex,"BMI");if(!p)return null;const [L,M,S]=p,z=zLms(value,L,M,S);if(z===null)return null;
+  const m3=valueFromLms(-3,L,M,S),m2=valueFromLms(-2,L,M,S),p2=valueFromLms(2,L,M,S),p3=valueFromLms(3,L,M,S);
+  if(z>3&&p3!==p2)return 3+(value-p3)/(p3-p2);
+  if(z<-3&&m2!==m3)return -3+(value-m3)/(m2-m3);
+  return z;
+}
+function zHeight(value,months,sex){const p=lms(months,sex,"HFA");return p?zLms(value,...p):null}
+function classifyHeight(z){if(z===null)return "";if(z<-3)return"Talla baja severa";if(z<-2)return"Talla baja";if(z>2)return"Talla alta";return"Talla adecuada"}
+function classifyBMI(z,months){
+  if(z===null||months===null)return"";
+  if(months<61){if(z<-3)return"Emaciación severa";if(z<-2)return"Emaciación";if(z<=1)return"Adecuado";if(z<=2)return"Riesgo de sobrepeso";if(z<=3)return"Sobrepeso";return"Obesidad"}
+  if(z<-3)return"Delgadez severa";if(z<-2)return"Delgadez";if(z<=1)return"Adecuado";if(z<=2)return"Sobrepeso";if(z<=3)return"Obesidad";return"Obesidad severa";
+}
+function classifyHydrationByUSG(value){
+  const v=num(value);
+  if(v===null)return"";
+  if(v<1.010)return"Revisar valor";
+  if(v<=1.020)return"Euhidratado";
+  if(v<=1.030)return"Hipohidratado";
+  return"Deshidratación severa";
+}
+function hydrationBadgeClass(text){
+  const t=String(text||"").toLowerCase();
+  if(t.includes("euhidrat"))return"ok";
+  if(t.includes("severa"))return"bad";
+  if(t.includes("hipohidrat"))return"warn";
+  return"";
+}
+function hydrationColor(text){
+  const t=String(text||"").toLowerCase();
+  if(t.includes("euhidrat"))return"#16a34a";
+  if(t.includes("hipohidrat"))return"#eab308";
+  if(t.includes("severa"))return"#dc2626";
+  return"#94a3b8";
+}
+function hydrationIndicator(status,value=null){
+  const label=status||"No registrado";
+  const color=hydrationColor(label);
+  const valueText=value!==null&&value!==undefined&&value!==""?` · ${Number(value).toFixed(3)}`:"";
+  return`<span class="hydration-status"><svg class="hydration-status-dot" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><circle cx="8" cy="8" r="7" fill="${color}" stroke="#334155" stroke-width="1"/></svg><span>${esc(label)}${valueText}</span></span>`;
+}
+function updateHydrationPreview(){
+  const usg=num(document.getElementById("urine-specific-gravity")?.value);
+  const result=classifyHydrationByUSG(usg);
+  const box=document.getElementById("usg-hydration-preview");
+  if(box)box.innerHTML=usg!==null?hydrationIndicator(result,usg):"No registrado";
+}
+function hydrationTableCell(e){
+  const usg=e.urineSpecificGravity!==null&&e.urineSpecificGravity!==undefined?e.urineSpecificGravity:null;
+  const usgClass=e.hydrationUSGClass||"No registrado";
+  return`<div class="hydration-cell">${hydrationIndicator(usgClass,usg)}</div>`;
+}
+function hydrationReportMetric(e){
+  const status=e.hydrationUSGClass||"No registrado";
+  return`<div class="report-metric hydration-report-metric">
+    <strong>${hydrationIndicator(status,null)}</strong>
+    <span class="small muted">Test de hidratación</span>
+  </div>`;
+}
+function classifySomato(e,m,c){
+  if(Math.max(e,m,c)-Math.min(e,m,c)<=1)return"Central";
+  if(e>=m+1&&e>=c+1)return"Endomorfo predominante";
+  if(m>=e+1&&m>=c+1)return"Mesomorfo predominante";
+  if(c>=e+1&&c>=m+1)return"Ectomorfo predominante";
+  if(Math.abs(e-m)<1&&e>c&&m>c)return"Endo-mesomorfo";
+  if(Math.abs(m-c)<1&&m>e&&c>e)return"Meso-ectomorfo";
+  return"Endo-ectomorfo";
+}
+function somatotype(d){
+  const h=num(d.height),w=num(d.weight),tri=num(d.triceps),sub=num(d.subscapular),sup=num(d.supraspinal),leg=num(d.medialCalf),hu=num(d.humerus),fe=num(d.femur),arm=num(d.arm),calf=num(d.calf);
+  let endo=null,meso=null,ecto=null;
+  if(h&&[tri,sub,sup].every(v=>v!==null)){const x=(tri+sub+sup)*170.18/h;endo=Math.max(.1,-.7182+.1451*x-.00068*x*x+.0000014*x*x*x)}
+  if(h&&[hu,fe,arm,calf,tri,leg].every(v=>v!==null)){const ac=arm-tri/10,cc=calf-leg/10;meso=Math.max(.1,.858*hu+.601*fe+.188*ac+.161*cc-.131*h+4.5)}
+  if(h&&w){const ratio=h/Math.cbrt(w);ecto=Math.max(.1,ratio>=40.75?.732*ratio-28.58:ratio>38.25?.463*ratio-17.63:.1)}
+  const complete=[endo,meso,ecto].every(v=>v!==null);
+  return {endomorphy:endo,mesomorphy:meso,ectomorphy:ecto,x:complete?ecto-endo:null,y:complete?2*meso-endo-ecto:null,category:complete?classifySomato(endo,meso,ecto):""};
+}
+function calculateEvaluation(raw,patient){
+  const age=calculateAge(patient.dob,raw.date),months=age?.months??null,adj=adjustHeight(raw.height,months,raw.measurementType),imc=bmi(raw.weight,adj);
+  const zh=months!==null&&months<=228?zHeight(adj,months,patient.sex):null,zb=months!==null&&months<=228?zBMI(imc,months,patient.sex):null;
+  const som=somatotype(raw),alerts=[];
+  const urineSpecificGravity=num(raw.urineSpecificGravity);
+  const hydrationUSGClass=classifyHydrationByUSG(urineSpecificGravity);
+  if(!age)alerts.push("Revisar fechas");else if(months>228)alerts.push("Fuera de rango OMS 0–228 meses");
+  if(months!==null&&months>=61&&raw.measurementType!=="Talla de pie")alerts.push("Desde 61 meses se recomienda talla de pie");
+  if(zh!==null&&(zh<-6||zh>6))alerts.push("Z talla/edad biológicamente improbable");
+  if(zb!==null&&(zb<-5||zb>5))alerts.push("Z IMC/edad biológicamente improbable");
+  return {...raw,urineSpecificGravity,hydrationUSGClass,ageDays:age?.days??null,ageMonths:months,ageYears:age?.years??null,adjustedHeight:adj,bmi:imc,zHeight:zh,heightClass:classifyHeight(zh),zBMI:zb,bmiClass:classifyBMI(zb,months),...som,alerts:alerts.length?alerts.join("; "):"OK"};
+}
+
+
+// Gestión de proyectos.
+const projectForm=document.getElementById("project-form");
+if(projectForm){
+  projectForm.addEventListener("submit",e=>{
+    e.preventDefault();
+    const id=document.getElementById("project-id").value||uid("proy");
+    const project={
+      id,
+      name:document.getElementById("project-name").value.trim(),
+      academy:document.getElementById("project-academy").value.trim(),
+      discipline:document.getElementById("project-discipline").value.trim(),
+      group:document.getElementById("project-group").value.trim(),
+      description:document.getElementById("project-description").value.trim(),
+      updatedAt:new Date().toISOString()
+    };
+    if(!project.name){toast("Escribe el nombre del proyecto","bad");return}
+    const idx=state.projects.findIndex(x=>x.id===id);
+    if(idx>=0)state.projects[idx]=project;else state.projects.push(project);
+    save();resetProjectForm();toast("Proyecto guardado");
+  });
+}
+function resetProjectForm(){
+  const form=document.getElementById("project-form");
+  if(form)form.reset();
+  const id=document.getElementById("project-id");if(id)id.value="";
+  const title=document.getElementById("project-form-title");if(title)title.textContent="Crear proyecto";
+}
+function editProject(id){
+  const p=state.projects.find(x=>x.id===id);if(!p)return;
+  document.getElementById("project-id").value=p.id;
+  document.getElementById("project-name").value=p.name||"";
+  document.getElementById("project-academy").value=p.academy||"";
+  document.getElementById("project-discipline").value=p.discipline||"";
+  document.getElementById("project-group").value=p.group||"";
+  document.getElementById("project-description").value=p.description||"";
+  document.getElementById("project-form-title").textContent="Editar proyecto";
+  goTab("proyectos");
+}
+function deleteProject(id){
+  const participantIds=state.patients.filter(p=>p.projectId===id).map(p=>p.id);
+  const evaluationCount=state.evaluations.filter(e=>e.projectId===id||participantIds.includes(e.patientId)).length;
+  if(!confirm(`Se eliminará el proyecto, ${participantIds.length} participantes y ${evaluationCount} evaluaciones asociadas. ¿Continuar?`))return;
+  state.projects=state.projects.filter(x=>x.id!==id);
+  state.patients=state.patients.filter(p=>p.projectId!==id);
+  state.evaluations=state.evaluations.filter(e=>e.projectId!==id&&!participantIds.includes(e.patientId));
+  save();toast("Proyecto eliminado");
+}
+function projectParticipantIds(projectId){
+  return state.patients.filter(p=>p.projectId===projectId).map(p=>p.id);
+}
+function renderProjects(){
+  const body=document.getElementById("projects-body");if(!body)return;
+  const q=(document.getElementById("project-search")?.value||"").trim().toLowerCase();
+  const list=state.projects
+    .filter(p=>`${p.name||""} ${p.academy||""} ${p.discipline||""} ${p.group||""}`.toLowerCase().includes(q))
+    .sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  body.innerHTML=list.length?list.map(p=>`<tr>
+    <td><strong>${esc(p.name)}</strong><br><span class="small muted">${esc([p.academy,p.discipline,p.group].filter(Boolean).join(" · "))}</span></td>
+    <td>${projectParticipantIds(p.id).length}</td>
+    <td>${state.evaluations.filter(e=>e.projectId===p.id).length}</td>
+    <td><button class="btn light small" onclick="editProject('${p.id}')">Editar</button> <button class="btn danger small" onclick="deleteProject('${p.id}')">Eliminar</button></td>
+  </tr>`).join(""):`<tr><td colspan="4" class="empty">No hay proyectos registrados.</td></tr>`;
+}
+// Alias de compatibilidad para versiones previas o llamadas con diferente capitalización.
+function renderProject(){return renderProjects()}
+function renderproject(){return renderProjects()}
+
+document.getElementById("patient-form").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=document.getElementById("patient-id").value||uid("pac");
+  const projectId=document.getElementById("patient-project").value;
+  if(!state.projects.some(p=>p.id===projectId)){toast("Selecciona un proyecto","bad");return}
+  const previous=state.patients.find(x=>x.id===id);
+  const p={
+    id,projectId,
+    name:document.getElementById("patient-name").value.trim(),
+    dob:document.getElementById("patient-dob").value,
+    sex:document.getElementById("patient-sex").value,
+    activity:document.getElementById("patient-activity").value.trim(),
+    level:document.getElementById("patient-level").value,
+    updatedAt:new Date().toISOString()
+  };
+  const idx=state.patients.findIndex(x=>x.id===id);
+  if(idx>=0)state.patients[idx]=p;else state.patients.push(p);
+  // Si el participante cambia de proyecto, todas sus evaluaciones se trasladan con él.
+  if(previous&&previous.projectId!==projectId){
+    state.evaluations=state.evaluations.map(ev=>ev.patientId===id?{...ev,projectId}:ev);
+  }
+  save();resetPatientForm();toast("Participante guardado");
+});
+function resetPatientForm(){
+  document.getElementById("patient-form").reset();
+  document.getElementById("patient-id").value="";
+  document.getElementById("patient-form-title").textContent="Registrar participante";
+  renderSelects();
+}
+function editPatient(id){
+  const p=state.patients.find(x=>x.id===id);if(!p)return;
+  document.getElementById("patient-id").value=p.id;
+  document.getElementById("patient-project").value=p.projectId||"";
+  document.getElementById("patient-name").value=p.name;
+  document.getElementById("patient-dob").value=p.dob;
+  document.getElementById("patient-sex").value=p.sex;
+  document.getElementById("patient-activity").value=p.activity||"";
+  document.getElementById("patient-level").value=p.level||"";
+  document.getElementById("patient-form-title").textContent="Editar participante";
+  goTab("pacientes");
+}
+function deletePatient(id){
+  if(!confirm("Se eliminará el participante y todas sus evaluaciones. ¿Continuar?"))return;
+  state.patients=state.patients.filter(x=>x.id!==id);
+  state.evaluations=state.evaluations.filter(x=>x.patientId!==id);
+  save();toast("Participante eliminado");
+}
+function renderPatients(){
+  const q=(document.getElementById("patient-search")?.value||"").trim().toLowerCase();
+  const projectFilter=document.getElementById("patient-list-project")?.value||"all";
+  const body=document.getElementById("patients-body");if(!body)return;
+  const list=state.patients
+    .filter(p=>(projectFilter==="all"||p.projectId===projectFilter)&&p.name.toLowerCase().includes(q))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  body.innerHTML=list.length?list.map(p=>{
+    const project=state.projects.find(x=>x.id===p.projectId);
+    const evals=state.evaluations.filter(e=>e.patientId===p.id);
+    return`<tr>
+      <td><strong>${esc(p.name)}</strong><br><span class="small muted">${esc(p.activity||"")}</span></td>
+      <td>${esc(project?.name||"Sin proyecto")}</td>
+      <td>${esc(p.dob)}</td>
+      <td>${esc(p.sex)}</td>
+      <td>${evals.length}</td>
+      <td><button class="btn light small" onclick="editPatient('${p.id}')">Editar</button> <button class="btn danger small" onclick="deletePatient('${p.id}')">Eliminar</button></td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="6" class="empty">No hay participantes para el proyecto seleccionado.</td></tr>`;
+}
+
+document.getElementById("evaluation-form").addEventListener("submit",e=>{
+  e.preventDefault();
+  const evaluationId=document.getElementById("evaluation-id").value;
+  const projectId=document.getElementById("eval-project").value;
+  const patientId=document.getElementById("eval-patient").value;
+  const project=state.projects.find(p=>p.id===projectId);
+  const patient=state.patients.find(p=>p.id===patientId);
+  if(!project){toast("Selecciona un proyecto","bad");return}
+  if(!patient){toast("Selecciona un participante","bad");return}
+  if(patient.projectId!==projectId){toast("El participante no pertenece al proyecto seleccionado","bad");return}
+  const previous=state.evaluations.find(e=>e.id===evaluationId);
+  const raw={
+    id:evaluationId||uid("eva"),projectId,patientId,
+    date:document.getElementById("eval-date").value,
+    measurementType:document.getElementById("measurement-type").value,
+    weight:num(document.getElementById("weight").value),
+    height:num(document.getElementById("height").value),
+    triceps:num(document.getElementById("triceps").value),
+    subscapular:num(document.getElementById("subscapular").value),
+    supraspinal:num(document.getElementById("supraspinal").value),
+    medialCalf:num(document.getElementById("medial-calf").value),
+    humerus:num(document.getElementById("humerus").value),
+    femur:num(document.getElementById("femur").value),
+    arm:num(document.getElementById("arm").value),
+    calf:num(document.getElementById("calf").value),
+    urineSpecificGravity:num(document.getElementById("urine-specific-gravity").value),
+    notes:document.getElementById("notes").value.trim(),
+    createdAt:previous?.createdAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  const calculated=calculateEvaluation(raw,patient);
+  const idx=state.evaluations.findIndex(x=>x.id===raw.id);
+  if(idx>=0)state.evaluations[idx]=calculated;else state.evaluations.push(calculated);
+  save();
+  resetEvaluationForm();
+  document.getElementById("view-project").value=projectId;
+  renderProjectDateFilter(projectId,raw.date);
+  const participantProject=document.getElementById("participant-view-project");
+  if(participantProject)participantProject.value=projectId;
+  updateParticipantViewOptions(patientId);
+  goTab("visualizacion");
+  toast(idx>=0?"Evaluación modificada":"Evaluación guardada");
+});
+function setEvaluationField(id,value){
+  const el=document.getElementById(id);if(el)el.value=value===null||value===undefined?"":value;
+}
+function editEvaluation(id){
+  const evaluation=state.evaluations.find(e=>e.id===id);if(!evaluation)return;
+  const patient=state.patients.find(p=>p.id===evaluation.patientId);
+  if(!patient){toast("No se encontró el participante","bad");return}
+  goTab("evaluacion");
+  setEvaluationField("evaluation-id",evaluation.id);
+  setEvaluationField("eval-project",patient.projectId||evaluation.projectId);
+  updateEvaluationPatientOptions(evaluation.patientId);
+  setEvaluationField("eval-patient",evaluation.patientId);
+  setEvaluationField("eval-date",evaluation.date);
+  setEvaluationField("measurement-type",evaluation.measurementType||"Talla de pie");
+  setEvaluationField("weight",evaluation.weight);
+  setEvaluationField("height",evaluation.height);
+  setEvaluationField("triceps",evaluation.triceps);
+  setEvaluationField("subscapular",evaluation.subscapular);
+  setEvaluationField("supraspinal",evaluation.supraspinal);
+  setEvaluationField("medial-calf",evaluation.medialCalf);
+  setEvaluationField("humerus",evaluation.humerus);
+  setEvaluationField("femur",evaluation.femur);
+  setEvaluationField("arm",evaluation.arm);
+  setEvaluationField("calf",evaluation.calf);
+  setEvaluationField("urine-specific-gravity",evaluation.urineSpecificGravity);
+  setEvaluationField("notes",evaluation.notes||"");
+  updateHydrationPreview();
+  document.getElementById("evaluation-form-title").textContent="Editar evaluación";
+  document.getElementById("evaluation-submit-button").textContent="Guardar cambios";
+  document.getElementById("evaluation-edit-note").classList.remove("hidden");
+  document.getElementById("evaluation-cancel-edit").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function resetEvaluationForm(){
+  const project=document.getElementById("eval-project")?.value||"";
+  document.getElementById("evaluation-form").reset();
+  setEvaluationField("evaluation-id","");
+  document.getElementById("evaluation-form-title").textContent="Nueva evaluación";
+  document.getElementById("evaluation-submit-button").textContent="Calcular y guardar";
+  document.getElementById("evaluation-edit-note").classList.add("hidden");
+  document.getElementById("evaluation-cancel-edit").classList.add("hidden");
+  document.getElementById("eval-date").value=todayISO();
+  document.getElementById("measurement-type").value="Talla de pie";
+  updateHydrationPreview();
+  renderSelects();
+  if(project&&[...document.getElementById("eval-project").options].some(o=>o.value===project)){
+    document.getElementById("eval-project").value=project;
+  }
+  updateEvaluationPatientOptions();
+}
+function deleteEvaluation(id){
+  if(!confirm("¿Eliminar esta evaluación?"))return;
+  state.evaluations=state.evaluations.filter(x=>x.id!==id);
+  save();renderProjectView();renderParticipantView();toast("Evaluación eliminada");
+}
+
+function projectOptions(includeAll=false){
+  const sorted=state.projects.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  return (includeAll?`<option value="all">Todos los proyectos</option>`:`<option value="">Seleccione</option>`)
+    +sorted.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+}
+function updateEvaluationPatientOptions(preferredPatientId=""){
+  const projectId=document.getElementById("eval-project")?.value||"";
+  const select=document.getElementById("eval-patient");if(!select)return;
+  const old=preferredPatientId||select.value;
+  const patients=state.patients
+    .filter(p=>p.projectId===projectId)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  select.innerHTML=`<option value="">${projectId?"Seleccione":"Primero seleccione un proyecto"}</option>`
+    +patients.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  if(patients.some(p=>p.id===old))select.value=old;
+}
+function renderSelects(){
+  const projectOpts=projectOptions(false);
+  ["patient-project","eval-project","view-project","participant-view-project"].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const old=el.value;
+    el.innerHTML=projectOpts;
+    if([...el.options].some(o=>o.value===old))el.value=old;
+  });
+  const patientListProject=document.getElementById("patient-list-project");
+  if(patientListProject){
+    const old=patientListProject.value||"all";
+    patientListProject.innerHTML=projectOptions(true);
+    if([...patientListProject.options].some(o=>o.value===old))patientListProject.value=old;
+  }
+  updateEvaluationPatientOptions();
+  const viewProject=document.getElementById("view-project")?.value||state.projects[0]?.id||"";
+  if(viewProject){
+    renderProjectDateFilter(viewProject);
+  }else{
+    renderProjectDateFilter("");
+  }
+  updateParticipantViewOptions();
+}
+function renderStats(){
+  const complete=state.evaluations.filter(e=>e.category).length;
+  document.getElementById("stats").innerHTML=[
+    ["Proyectos",state.projects.length],
+    ["Participantes",state.patients.length],
+    ["Evaluaciones",state.evaluations.length],
+    ["Somatotipos completos",complete]
+  ].map(([l,v])=>`<div class="stat"><strong>${v}</strong><span>${l}</span></div>`).join("");
+}
+function badgeClass(text){if(!text)return"";const t=text.toLowerCase();return t.includes("adecuad")||t==="ok"?"ok":t.includes("baja")||t.includes("severa")||t.includes("obesidad")||t.includes("emaciación")||t.includes("delgadez")?"bad":"warn"}
+function dominantSomatoType(e){
+  const vals=[["endo",num(e.endomorphy)],["meso",num(e.mesomorphy)],["ecto",num(e.ectomorphy)]].filter(x=>x[1]!==null);
+  if(!vals.length)return"meso";return vals.sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+
+function updateParticipantViewOptions(preferredParticipantId=""){
+  const projectId=document.getElementById("participant-view-project")?.value||"";
+  const select=document.getElementById("participant-view-person");if(!select)return;
+  const previous=preferredParticipantId||select.value;
+  const participants=state.patients.filter(p=>p.projectId===projectId).sort((a,b)=>a.name.localeCompare(b.name));
+  select.innerHTML=participants.length
+    ?participants.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")
+    :`<option value="">Sin participantes</option>`;
+  select.value=participants.some(p=>p.id===previous)?previous:(participants[0]?.id||"");
+}
+function participantViewRows(){
+  const patientId=document.getElementById("participant-view-person")?.value||"";
+  const mode=document.getElementById("participant-view-mode")?.value||"latest";
+  const rows=state.evaluations.filter(e=>e.patientId===patientId)
+    .sort((a,b)=>b.date.localeCompare(a.date)||String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")));
+  return mode==="latest"?rows.slice(0,1):rows;
+}
+function renderParticipantView(){
+  const projectSelect=document.getElementById("participant-view-project");if(!projectSelect)return;
+  if(!projectSelect.value&&state.projects.length)projectSelect.value=state.projects[0].id;
+  updateParticipantViewOptions();
+  const project=state.projects.find(p=>p.id===projectSelect.value);
+  const patient=state.patients.find(p=>p.id===(document.getElementById("participant-view-person")?.value||""));
+  const header=document.getElementById("participant-view-header");
+  const summaryBody=document.getElementById("participant-summary-body");
+  const evaluationsBox=document.getElementById("participant-view-evaluations");
+  if(!project||!patient){
+    if(header)header.innerHTML=`<div class="project-empty">Selecciona un proyecto y un participante.</div>`;
+    if(summaryBody)summaryBody.innerHTML=`<tr><td colspan="9" class="empty">Sin evaluaciones para mostrar.</td></tr>`;
+    if(evaluationsBox)evaluationsBox.innerHTML=`<div class="empty">Sin evaluaciones para mostrar.</div>`;
+    drawSomatoProjectChart("participant-somato-canvas",[],"participant-chart-legend",true);
+    return;
+  }
+  const rows=participantViewRows(), mode=document.getElementById("participant-view-mode")?.value||"latest";
+  header.innerHTML=`<div class="participant-profile-title">
+    <div><h2 style="margin:0">${esc(patient.name)}</h2><p class="small muted" style="margin:5px 0 0">${esc(project.name)} · ${esc(patient.activity||"Actividad no registrada")}</p></div>
+    <span class="badge ok">${mode==="latest"?"Última evaluación":"Historial completo"}</span>
+  </div>`;
+  if(summaryBody)summaryBody.innerHTML=rows.length?rows.map(e=>`<tr>
+    <td data-label="Fecha">${formatProjectDate(e.date)}</td>
+    <td data-label="Edad">${fmt(e.ageYears,2)} años</td>
+    <td data-label="Peso">${fmt(e.weight)} kg</td>
+    <td data-label="Talla">${fmt(e.adjustedHeight,1)} cm</td>
+    <td data-label="IMC">${fmt(e.bmi,2)}</td>
+    <td data-label="Talla/edad"><span class="badge ${badgeClass(e.heightClass)}">${esc(e.heightClass||"—")}</span></td>
+    <td data-label="IMC/edad"><span class="badge ${badgeClass(e.bmiClass)}">${esc(e.bmiClass||"—")}</span></td>
+    <td data-label="Hidratación">${hydrationTableCell(e)}</td>
+    <td data-label="Somatotipo">${esc(e.category||"Datos incompletos")}</td>
+  </tr>`).join(""):`<tr><td colspan="9" class="empty">El participante todavía no tiene evaluaciones.</td></tr>`;
+  const chartRows=rows.filter(e=>e.x!==null&&e.y!==null);
+  drawSomatoProjectChart("participant-somato-canvas",chartRows,"participant-chart-legend",true);
+  evaluationsBox.innerHTML=rows.length?rows.map(e=>`<article class="participant-history-evaluation">
+    <h3>Evaluación del ${formatProjectDate(e.date)}</h3>
+    ${projectEvaluationMetrics(e)}
+    ${e.notes?`<p class="small"><strong>Observaciones:</strong> ${esc(e.notes)}</p>`:""}
+    <div class="evaluation-actions no-print">
+      <button class="btn light small" type="button" onclick="editEvaluation('${e.id}')">Editar evaluación</button>
+      <button class="btn danger small" type="button" onclick="deleteEvaluation('${e.id}')">Eliminar</button>
+    </div>
+  </article>`).join(""):`<div class="empty">El participante todavía no tiene evaluaciones.</div>`;
+}
+function printParticipantView(){
+  const patientId=document.getElementById("participant-view-person")?.value;
+  if(!patientId){toast("Selecciona un participante antes de imprimir.","bad");return}
+  renderParticipantView();
+  document.body.classList.add("print-participant");
+  setTimeout(()=>window.print(),180);
+}
+
+function projectEvaluations(projectId){
+  return state.evaluations.filter(e=>e.projectId===projectId);
+}
+function projectEvaluationDates(projectId){
+  return [...new Set(projectEvaluations(projectId).map(e=>e.date).filter(Boolean))]
+    .sort((a,b)=>b.localeCompare(a));
+}
+function formatProjectDate(date){
+  if(!date)return"";
+  const parsed=new Date(`${date}T12:00:00`);
+  return Number.isNaN(parsed.getTime())?date:parsed.toLocaleDateString("es-PE",{
+    day:"2-digit",month:"2-digit",year:"numeric"
+  });
+}
+function renderProjectDateFilter(projectId,preferredDate=""){
+  const select=document.getElementById("project-date-filter");if(!select)return"";
+  const dates=projectEvaluationDates(projectId);
+  const current=preferredDate||select.value;
+  if(!dates.length){
+    select.innerHTML=`<option value="">Sin fechas disponibles</option>`;
+    select.value="";
+    select.disabled=true;
+    return"";
+  }
+  select.disabled=false;
+  select.innerHTML=dates.map(date=>{
+    const participantCount=new Set(
+      projectEvaluations(projectId)
+        .filter(e=>e.date===date)
+        .map(e=>e.patientId)
+    ).size;
+    return`<option value="${date}">${formatProjectDate(date)} · ${participantCount} participante${participantCount===1?"":"s"}</option>`;
+  }).join("");
+  select.value=dates.includes(current)?current:dates[0];
+  return select.value;
+}
+function selectedProjectDate(){
+  return document.getElementById("project-date-filter")?.value||"";
+}
+function projectEvaluationsForSelectedDate(projectId){
+  const date=selectedProjectDate();
+  return date?projectEvaluations(projectId).filter(e=>e.date===date):[];
+}
+function renderProjectView(){
+  const select=document.getElementById("view-project");if(!select)return;
+  if(!select.value&&state.projects.length)select.value=state.projects[0].id;
+  const project=state.projects.find(p=>p.id===select.value);
+  const header=document.getElementById("project-header-summary");
+  const body=document.getElementById("project-summary-body");
+  const stats=document.getElementById("project-stats");
+  const details=document.getElementById("project-participant-details");
+  if(!project){
+    if(header)header.innerHTML=`<div class="project-empty">Crea un proyecto para visualizar sus participantes.</div>`;
+    if(body)body.innerHTML=`<tr><td colspan="9" class="empty">Sin proyecto seleccionado.</td></tr>`;
+    if(stats)stats.innerHTML="";
+    if(details)details.innerHTML=`<div class="empty">Sin evaluaciones individuales.</div>`;
+    renderProjectDateFilter("");
+    renderProjectChart();return;
+  }
+
+  const selectedDate=renderProjectDateFilter(project.id);
+  const dateRows=projectEvaluationsForSelectedDate(project.id);
+  const evaluatedParticipants=new Set(dateRows.map(e=>e.patientId)).size;
+
+  header.innerHTML=`<div class="project-title">
+    <h2 style="margin:0">${esc(project.name)}</h2>
+    <div class="project-header-badges">
+      <span class="badge">${selectedDate?`Fecha: ${formatProjectDate(selectedDate)}`:"Sin fecha"}</span>
+      <span class="badge ok">${evaluatedParticipants} evaluado${evaluatedParticipants===1?"":"s"} en la jornada</span>
+    </div>
+  </div>`;
+
+  stats.innerHTML=[
+    ["Evaluados en la fecha",evaluatedParticipants],
+    ["Somatotipos completos",dateRows.filter(e=>e.category).length],
+    ["Hidratación registrada",dateRows.filter(e=>e.urineSpecificGravity!==null&&e.urineSpecificGravity!==undefined).length]
+  ].map(([l,v])=>`<div class="stat"><strong>${v}</strong><span>${l}</span></div>`).join("");
+
+  // Si existieran dos registros del mismo participante en la misma fecha,
+  // se muestra el actualizado más recientemente.
+  const byParticipant=new Map();
+  dateRows
+    .slice()
+    .sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))
+    .forEach(e=>{if(!byParticipant.has(e.patientId))byParticipant.set(e.patientId,e)});
+
+  const rows=[...byParticipant.values()].sort((a,b)=>{
+    const pa=state.patients.find(p=>p.id===a.patientId)?.name||"";
+    const pb=state.patients.find(p=>p.id===b.patientId)?.name||"";
+    return pa.localeCompare(pb);
+  });
+
+  body.innerHTML=rows.length?rows.map(e=>{
+    const p=state.patients.find(x=>x.id===e.patientId)||{};
+    return`<tr>
+      <td data-label="Participante"><strong>${esc(p.name||"Participante")}</strong><br><span class="small muted">${esc(p.activity||"")}</span></td>
+      <td data-label="Edad">${fmt(e.ageYears,2)} años</td>
+      <td data-label="Peso">${fmt(e.weight)} kg</td>
+      <td data-label="Talla">${fmt(e.adjustedHeight,1)} cm</td>
+      <td data-label="IMC">${fmt(e.bmi,2)}</td>
+      <td data-label="Talla/edad"><span class="badge ${badgeClass(e.heightClass)}">${esc(e.heightClass||"—")}</span></td>
+      <td data-label="IMC/edad"><span class="badge ${badgeClass(e.bmiClass)}">${esc(e.bmiClass||"—")}</span></td>
+      <td data-label="Hidratación">${hydrationTableCell(e)}</td>
+      <td data-label="Somatotipo">${esc(e.category||"Datos incompletos")}</td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="9" class="empty">${selectedDate?`No hay evaluaciones registradas para ${formatProjectDate(selectedDate)}.`:"El proyecto no tiene evaluaciones registradas."}</td></tr>`;
+
+  renderProjectParticipantDetails(project.id);
+  renderProjectChart();
+}
+function projectDetailEvaluations(projectId){
+  return projectEvaluationsForSelectedDate(projectId).filter(e=>{
+    const p=state.patients.find(x=>x.id===e.patientId);
+    return p&&p.projectId===projectId;
+  }).sort((a,b)=>{
+    const pa=state.patients.find(p=>p.id===a.patientId)?.name||"";
+    const pb=state.patients.find(p=>p.id===b.patientId)?.name||"";
+    return pa.localeCompare(pb);
+  });
+}
+function projectEvaluationMetrics(e){
+  return`<div class="report-metrics">
+    ${reportMetric("Fecha",e.date||"—")}
+    ${reportMetric("Edad",`${fmt(e.ageYears,2)} años`)}
+    ${reportMetric("Peso",`${fmt(e.weight)} kg`)}
+    ${reportMetric("Talla ajustada",`${fmt(e.adjustedHeight,1)} cm`)}
+    ${reportMetric("IMC",fmt(e.bmi,2))}
+    ${reportMetric("Z talla/edad",fmt(e.zHeight,2))}
+    ${reportMetric("Talla/edad",e.heightClass||"—")}
+    ${reportMetric("Z IMC/edad",fmt(e.zBMI,2))}
+    ${reportMetric("IMC/edad",e.bmiClass||"—")}
+    ${reportMetric("Gravedad específica",e.urineSpecificGravity!==null&&e.urineSpecificGravity!==undefined?fmt(e.urineSpecificGravity,3):"—")}
+    ${hydrationReportMetric(e)}
+    ${reportMetric("Endomorfia",fmt(e.endomorphy,2))}
+    ${reportMetric("Mesomorfia",fmt(e.mesomorphy,2))}
+    ${reportMetric("Ectomorfia",fmt(e.ectomorphy,2))}
+    ${reportMetric("Somatotipo",e.category||"Datos incompletos")}
+  </div>`;
+}
+function renderProjectParticipantDetails(projectId){
+  const box=document.getElementById("project-participant-details");if(!box)return;
+  const rows=projectDetailEvaluations(projectId);
+  if(!rows.length){
+    const date=selectedProjectDate();
+    box.innerHTML=`<div class="empty">${date?`No hay evaluaciones individuales para ${formatProjectDate(date)}.`:"No hay evaluaciones individuales para mostrar."}</div>`;
+    return;
+  }
+  const groups=new Map();
+  rows.forEach(e=>{if(!groups.has(e.patientId))groups.set(e.patientId,[]);groups.get(e.patientId).push(e)});
+  box.innerHTML=[...groups.entries()].map(([patientId,evals])=>{
+    const p=state.patients.find(x=>x.id===patientId)||{};
+    return`<section class="participant-detail">
+      <div class="participant-detail-header">
+        <div><h3 style="margin:0">${esc(p.name||"Participante")}</h3><p class="small muted" style="margin:4px 0 0">${esc(p.sex||"")} · Nacimiento: ${esc(p.dob||"—")} · ${esc(p.activity||"Sin actividad registrada")}</p></div>
+        <span class="badge ok">${evals.length} evaluación${evals.length===1?"":"es"}</span>
+      </div>
+      ${evals.map(e=>`<article class="participant-evaluation">
+        <h4>Evaluación del ${esc(e.date)}</h4>
+        ${projectEvaluationMetrics(e)}
+        ${e.notes?`<p class="small"><strong>Observaciones:</strong> ${esc(e.notes)}</p>`:""}
+        <div class="evaluation-actions no-print">
+          <button class="btn light small" type="button" onclick="editEvaluation('${e.id}')">Editar evaluación</button>
+          <button class="btn danger small" type="button" onclick="deleteEvaluation('${e.id}')">Eliminar</button>
+        </div>
+      </article>`).join("")}
+    </section>`;
+  }).join("");
+}
+function printProjectView(){
+  const projectId=document.getElementById("view-project")?.value;
+  const date=selectedProjectDate();
+  if(!projectId){toast("Selecciona un proyecto antes de imprimir.","bad");return}
+  if(!date){toast("El proyecto no tiene una fecha de evaluación disponible.","bad");return}
+  renderProjectView();
+  document.body.classList.add("print-project");
+  setTimeout(()=>window.print(),180);
+}
+
+function projectChartRows(){
+  const projectId=document.getElementById("view-project")?.value;
+  if(!projectId)return[];
+  return projectEvaluationsForSelectedDate(projectId).filter(e=>{
+    const p=state.patients.find(x=>x.id===e.patientId);
+    return p&&p.projectId===projectId&&e.x!==null&&e.y!==null;
+  });
+}
+function renderProjectChart(){
+  const rows=projectChartRows();
+  const counts={endo:0,meso:0,ecto:0};
+  rows.forEach(e=>counts[dominantSomatoType(e)]++);
+  const total=rows.length;
+  const summary=document.getElementById("project-type-summary");
+  const totalLabel=document.getElementById("project-composition-total");
+  if(totalLabel)totalLabel.textContent=total?`${total} evaluado${total===1?"":"s"}`:"Sin datos";
+  if(summary){
+    const items=[
+      ["Endomorfia",counts.endo,"#d97706"],
+      ["Mesomorfia",counts.meso,"#0f766e"],
+      ["Ectomorfia",counts.ecto,"#2563eb"]
+    ];
+    summary.innerHTML=items.map(([label,count,color])=>{
+      const percent=total?Math.round(count*100/total):0;
+      return`<div class="composition-row">
+        <span class="composition-label">${label}</span>
+        <span class="composition-bar" aria-hidden="true"><span style="--composition-color:${color};width:${percent}%"></span></span>
+        <span class="composition-value"><strong>${count}</strong> · ${percent}%</span>
+      </div>`;
+    }).join("");
+  }
+  drawSomatoProjectChart("project-somato-canvas",rows,"project-chart-legend",false);
+}
+
+function drawSomatotypeSymbol(ctx,type,cx,cy,scale,color){
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(scale,scale);
+  ctx.fillStyle=color;
+  ctx.strokeStyle="rgba(15,23,42,.18)";
+  ctx.lineWidth=1.2;
+
+  // Cabeza más grande y redondeada.
+  ctx.beginPath();
+  ctx.arc(0,-17,6.2,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+
+  if(type==="endo"){
+    // Cuerpo ovalado, suave y amigable.
+    ctx.beginPath();
+    ctx.ellipse(0,3,11.5,14.5,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+  }else if(type==="meso"){
+    // Torso ancho con hombros y bordes redondeados.
+    ctx.beginPath();
+    ctx.moveTo(-10,-7);
+    ctx.quadraticCurveTo(-7,-11,0,-11);
+    ctx.quadraticCurveTo(7,-11,10,-7);
+    ctx.lineTo(6.5,14);
+    ctx.quadraticCurveTo(0,17,-6.5,14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }else{
+    // Torso delgado con esquinas suaves.
+    ctx.beginPath();
+    ctx.roundRect(-4.8,-9,9.6,24,4.8);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawSomatoProjectChart(id,rows,legendId,showDateInLegend=false){
+  const c=document.getElementById(id);if(!c)return;
+  const ctx=c.getContext("2d"),W=c.width,H=c.height,pad=64,xMin=-9,xMax=9,yMin=-7,yMax=17;
+  const sx=v=>pad+(v-xMin)/(xMax-xMin)*(W-2*pad),sy=v=>H-pad-(v-yMin)/(yMax-yMin)*(H-2*pad);
+  const palette=["#0f766e","#155e75","#dc2626","#7c3aed","#d97706","#0891b2","#be123c","#4d7c0f","#4338ca","#a21caf"];
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="#e2e8f0";ctx.lineWidth=1;ctx.font="12px system-ui";ctx.fillStyle="#64748b";
+  for(let gx=-8;gx<=8;gx+=2){ctx.beginPath();ctx.moveTo(sx(gx),sy(yMin));ctx.lineTo(sx(gx),sy(yMax));ctx.stroke();ctx.fillText(gx,sx(gx)-5,sy(0)+18)}
+  for(let gy=-6;gy<=16;gy+=2){ctx.beginPath();ctx.moveTo(sx(xMin),sy(gy));ctx.lineTo(sx(xMax),sy(gy));ctx.stroke();if(gy!==0)ctx.fillText(gy,sx(0)+7,sy(gy)+4)}
+  ctx.strokeStyle="#94a3b8";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx(-7),sy(-5));ctx.lineTo(sx(0),sy(15));ctx.lineTo(sx(7),sy(-5));ctx.closePath();ctx.stroke();
+  ctx.strokeStyle="#334155";ctx.beginPath();ctx.moveTo(sx(xMin),sy(0));ctx.lineTo(sx(xMax),sy(0));ctx.moveTo(sx(0),sy(yMin));ctx.lineTo(sx(0),sy(yMax));ctx.stroke();
+  ctx.fillStyle="#0f766e";
+  // Símbolos ubicados fuera de los ejes para evitar superposición.
+  drawSomatotypeSymbol(ctx,"meso",sx(0),28,0.66,"#0f766e");
+  drawSomatotypeSymbol(ctx,"endo",43,H-55,0.66,"#0f766e");
+  drawSomatotypeSymbol(ctx,"ecto",W-43,H-55,0.66,"#0f766e");
+  ctx.font="bold 15px system-ui";
+  ctx.textAlign="center";
+  ctx.fillText("MESOMORFIA",sx(0),63);
+  ctx.textAlign="left";
+  ctx.fillText("ENDOMORFIA",18,H-18);
+  ctx.textAlign="right";
+  ctx.fillText("ECTOMORFIA",W-18,H-18);
+  ctx.textAlign="left";
+  const legend=[];
+  rows.forEach((e,i)=>{
+    const p=state.patients.find(x=>x.id===e.patientId)||{},color=palette[i%palette.length];
+    const label=showDateInLegend?`${p.name||"Participante"} · ${formatProjectDate(e.date)}`:`${p.name||"Participante"}`;
+    ctx.beginPath();ctx.arc(sx(e.x),sy(e.y),8,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=color;ctx.font="bold 11px system-ui";ctx.fillText(String(i+1),sx(e.x)+10,sy(e.y)-8);
+    legend.push(`<span><i class="legend-dot" style="background:${color}"></i><strong>${i+1}</strong> ${esc(label)}</span>`);
+  });
+  const legendBox=document.getElementById(legendId);
+  if(legendBox)legendBox.innerHTML=legend.length?legend.join(""):`<span class="muted">No hay somatotipos completos para mostrar.</span>`;
+}
+
+function reportMetric(label,value){return`<div class="report-metric"><strong>${esc(value)}</strong><span class="small muted">${esc(label)}</span></div>`}
+
+function flattenEvaluation(e){
+  const p=state.patients.find(x=>x.id===e.patientId)||{};
+  const project=state.projects.find(x=>x.id===e.projectId)||{};
+  return{
+    ID_evaluacion:e.id,ID_proyecto:e.projectId,Proyecto:project.name||"",Academia:project.academy||"",
+    ID_paciente:e.patientId,Nombre:p.name||"",Fecha_nacimiento:p.dob||"",Sexo:p.sex||"",Actividad:p.activity||"",Nivel_actividad:p.level||"",
+    Fecha_evaluacion:e.date,Tipo_medicion:e.measurementType,Peso_kg:e.weight,Talla_cm:e.height,Talla_ajustada_OMS_cm:e.adjustedHeight,IMC:e.bmi,
+    Edad_dias:e.ageDays,Edad_meses:e.ageMonths,Edad_anos:e.ageYears,Z_talla_edad:e.zHeight,Clasificacion_talla_edad:e.heightClass,
+    Z_IMC_edad:e.zBMI,Clasificacion_IMC_edad:e.bmiClass,Triceps_mm:e.triceps,Subescapular_mm:e.subscapular,Supraespinal_mm:e.supraspinal,
+    Pierna_medial_mm:e.medialCalf,Diametro_humero_cm:e.humerus,Diametro_femur_cm:e.femur,Perimetro_brazo_flex_cm:e.arm,
+    Perimetro_pantorrilla_cm:e.calf,Endomorfia:e.endomorphy,Mesomorfia:e.mesomorphy,Ectomorfia:e.ectomorphy,
+    Somatocarta_X:e.x,Somatocarta_Y:e.y,Clasificacion_somatotipo:e.category,
+    Gravedad_especifica_orina:e.urineSpecificGravity,Clasificacion_hidratacion_USG:e.hydrationUSGClass,
+    Alertas:e.alerts,Observaciones:e.notes
+  }
+}
+function exportExcel(){
+  if(typeof XLSX==="undefined"){toast("No se cargó la biblioteca Excel. Conecta el dispositivo a internet y vuelve a intentarlo.","bad");return}
+  const wb=XLSX.utils.book_new();
+  const projects=state.projects.map(p=>({ID_proyecto:p.id,Proyecto:p.name,Academia:p.academy,Disciplina:p.discipline,Grupo_temporada:p.group,Descripcion:p.description}));
+  const patients=state.patients.map(p=>({ID_proyecto:p.projectId,ID_paciente:p.id,Nombre:p.name,Fecha_nacimiento:p.dob,Sexo:p.sex,Actividad:p.activity,Nivel_actividad:p.level}));
+  const evals=state.evaluations.map(flattenEvaluation);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(projects),"Proyectos");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(patients),"Pacientes");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(evals),"Evaluaciones_Completas");
+  XLSX.writeFile(wb,`antropometria_proyectos_${todayISO()}.xlsx`);
+}
+function exportInputTemplate(){
+  if(typeof XLSX==="undefined"){toast("No se cargó la biblioteca Excel. Conecta el dispositivo a internet y vuelve a intentarlo.","bad");return}
+  const projectHeaders=["ID_proyecto","Proyecto","Academia","Disciplina","Grupo_temporada","Descripcion"];
+  const patientHeaders=["ID_proyecto","ID_paciente","Nombre","Fecha_nacimiento","Sexo","Actividad","Nivel_actividad"];
+  const evaluationHeaders=["ID_proyecto","ID_paciente","Fecha_evaluacion","Tipo_medicion","Peso_kg","Talla_cm","Triceps_mm","Subescapular_mm","Supraespinal_mm","Pierna_medial_mm","Diametro_humero_cm","Diametro_femur_cm","Perimetro_brazo_flex_cm","Perimetro_pantorrilla_cm","Gravedad_especifica_orina","Observaciones"];
+  const instructions=[
+    ["PLANTILLA DE INGRESO – PROYECTOS, ANTROPOMETRÍA OMS Y SOMATOTIPO"],
+    ["1. Registre cada academia, equipo o grupo en Proyectos con un ID_proyecto único."],
+    ["2. Registre cada persona en Pacientes con ID_proyecto e ID_paciente únicos."],
+    ["3. El participante solo aparecerá en las evaluaciones de su proyecto."],
+    ["4. Sexo debe ser Femenino o Masculino."],
+    ["5. Tipo_medicion debe ser Talla de pie o Longitud acostado."],
+    ["6. Para hidratación, registre Gravedad_especifica_orina (ej. 1.018)."],
+    ["7. La aplicación calculará edad, IMC, indicadores OMS, hidratación y somatotipo."]
+  ];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([projectHeaders]),"Proyectos");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([patientHeaders]),"Pacientes");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([evaluationHeaders]),"Evaluaciones_Entrada");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(instructions),"Instrucciones");
+  XLSX.writeFile(wb,"plantilla_ingreso_por_proyectos.xlsx");
+}
+function excelDate(value){
+  if(value===null||value===undefined||value==="")return"";
+  if(value instanceof Date&&!isNaN(value))return value.toISOString().slice(0,10);
+  if(typeof value==="number"&&typeof XLSX!=="undefined"){
+    const d=XLSX.SSF.parse_date_code(value);
+    if(d)return`${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`;
+  }
+  const s=String(value).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);
+  const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m)return`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  return s.slice(0,10);
+}
+function sheetObjects(sheet, expectedHeaders){
+  if(!sheet)return[];
+  const matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:"",raw:true});
+  const normalize=v=>String(v??"").trim();
+  let headerIndex=matrix.findIndex(row=>{
+    const cells=row.map(normalize);
+    return expectedHeaders.some(h=>cells.includes(h));
+  });
+  if(headerIndex<0)return[];
+  const headers=matrix[headerIndex].map(normalize);
+  return matrix.slice(headerIndex+1)
+    .filter(row=>row.some(v=>normalize(v)!==""))
+    .map(row=>{
+      const obj={};
+      headers.forEach((h,i)=>{if(h)obj[h]=row[i]??""});
+      return obj;
+    });
+}
+async function importExcel(file){
+  if(!file)return;
+  if(typeof XLSX==="undefined"){toast("No se cargó la biblioteca Excel. Conecta el dispositivo a internet y vuelve a intentarlo.","bad");return}
+  try{
+    const wb=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+    const projectSheet=wb.Sheets["Proyectos"];
+    const patientSheet=wb.Sheets["Pacientes"]||wb.Sheets[wb.SheetNames[0]];
+    const evalSheet=wb.Sheets["Evaluaciones_Entrada"]||wb.Sheets["Evaluaciones"]||wb.Sheets["Evaluaciones_Completas"];
+    if(!patientSheet||!evalSheet)throw new Error("Faltan hojas requeridas.");
+    const projectRows=sheetObjects(projectSheet,["ID_proyecto","Proyecto"]);
+    const ps=sheetObjects(patientSheet,["ID_paciente","Nombre"]);
+    const es=sheetObjects(evalSheet,["ID_paciente","Fecha_evaluacion","Peso_kg"]);
+    if(!confirm("La importación reemplazará los datos actuales. ¿Continuar?"))return;
+
+    let projects=projectRows.map((r,i)=>({
+      id:String(r.ID_proyecto||`PROY-${String(i+1).padStart(3,"0")}`).trim(),
+      name:String(r.Proyecto||r.Nombre_proyecto||"").trim(),
+      academy:String(r.Academia||"").trim(),
+      discipline:String(r.Disciplina||"").trim(),
+      group:String(r.Grupo_temporada||r.Grupo||"").trim(),
+      description:String(r.Descripcion||"").trim()
+    })).filter(p=>p.name);
+    if(!projects.length)projects=[{id:"PROY-GENERAL",name:"Proyecto general",academy:"",discipline:"",group:"",description:"Creado automáticamente al importar"}];
+
+    const projectById=new Map(projects.map(p=>[p.id,p]));
+    const projectByName=new Map(projects.map(p=>[p.name.toLowerCase(),p]));
+    const patients=ps.map((r,i)=>{
+      const linkedProject=projectById.get(String(r.ID_proyecto||"").trim())||projectByName.get(String(r.Proyecto||"").trim().toLowerCase());
+      return{
+        id:String(r.ID_paciente||r.ID||`PAC-${String(i+1).padStart(4,"0")}`).trim(),
+        projectId:linkedProject?.id||"",
+        name:String(r.Nombre||"").trim(),dob:excelDate(r.Fecha_nacimiento),sex:String(r.Sexo||"").trim(),
+        activity:String(r.Actividad||"").trim(),level:String(r.Nivel_actividad||"").trim()
+      };
+    }).filter(p=>p.name&&p.dob&&["Femenino","Masculino"].includes(p.sex));
+
+    const patientById=new Map(patients.map(p=>[p.id,p]));
+    const patientByName=new Map(patients.map(p=>[p.name.toLowerCase(),p]));
+    const evaluations=[];let skipped=0;
+    es.forEach(r=>{
+      const rowProject=projectById.get(String(r.ID_proyecto||"").trim())||projectByName.get(String(r.Proyecto||"").trim().toLowerCase())||projects[0];
+      const patient=patientById.get(String(r.ID_paciente||"").trim())||patientByName.get(String(r.Nombre||"").trim().toLowerCase());
+      const date=excelDate(r.Fecha_evaluacion||r.Fecha),weight=num(r.Peso_kg??r.Peso),height=num(r.Talla_cm??r.Talla);
+      if(!rowProject||!patient||!date||weight===null||height===null){skipped++;return}
+      if(!patient.projectId)patient.projectId=rowProject.id;
+      const project=projectById.get(patient.projectId)||rowProject;
+      const raw={id:String(r.ID_evaluacion||uid("eva")),projectId:project.id,patientId:patient.id,date,measurementType:String(r.Tipo_medicion||"Talla de pie").trim()||"Talla de pie",weight,height,triceps:num(r.Triceps_mm),subscapular:num(r.Subescapular_mm),supraspinal:num(r.Supraespinal_mm),medialCalf:num(r.Pierna_medial_mm),humerus:num(r.Diametro_humero_cm),femur:num(r.Diametro_femur_cm),arm:num(r.Perimetro_brazo_flex_cm),calf:num(r.Perimetro_pantorrilla_cm),urineSpecificGravity:num(r.Gravedad_especifica_orina),notes:String(r.Observaciones||"").trim(),createdAt:new Date().toISOString()};
+      evaluations.push(calculateEvaluation(raw,patient));
+    });
+    patients.forEach(p=>{if(!p.projectId)p.projectId=projects[0]?.id||""});
+    if(!patients.length)throw new Error("No se encontraron participantes. Verifica los encabezados de la hoja Pacientes.");
+    if(!evaluations.length)throw new Error("No se encontraron evaluaciones válidas. Verifica los encabezados y los identificadores.");
+    state={projects,patients,evaluations};save();
+    const firstProject=projects[0]?.id||"";
+    const viewSelect=document.getElementById("view-project");
+    if(viewSelect&&firstProject)viewSelect.value=firstProject;
+    toast(`Importado: ${projects.length} proyectos, ${patients.length} participantes y ${evaluations.length} evaluaciones${skipped?`; ${skipped} filas omitidas`:""}`);
+  }catch(e){console.error(e);toast(e?.message||"No se pudo importar. Verifica las hojas y encabezados.","bad")}
+}
+function loadDemo(){
+  if((state.projects.length||state.patients.length)&&!confirm("Esto agregará proyectos y participantes de demostración. ¿Continuar?"))return;
+  const p1={id:uid("proy"),name:"Academia Norte – Sub 15",academy:"Academia Norte",discipline:"Fútbol",group:"Sub 15 · 2026",description:"Grupo de demostración"};
+  const p2={id:uid("proy"),name:"Club Acuático – Juveniles",academy:"Club Acuático",discipline:"Natación",group:"Juveniles · 2026",description:"Grupo de demostración"};
+  const a={id:uid("pac"),projectId:p1.id,name:"Participante A",dob:"2012-06-15",sex:"Masculino",activity:"Fútbol",level:"Intensa"};
+  const b={id:uid("pac"),projectId:p2.id,name:"Participante B",dob:"2011-09-20",sex:"Femenino",activity:"Natación",level:"Moderada"};
+  state.projects.push(p1,p2);state.patients.push(a,b);
+  const r1={id:uid("eva"),projectId:p1.id,patientId:a.id,date:todayISO(),measurementType:"Talla de pie",weight:52.4,height:163.2,triceps:10.2,subscapular:9.4,supraspinal:8.8,medialCalf:10.1,humerus:6.5,femur:9.3,arm:27.6,calf:34.2,urineSpecificGravity:1.018,notes:"Registro ficticio."};
+  const r2={id:uid("eva"),projectId:p2.id,patientId:b.id,date:todayISO(),measurementType:"Talla de pie",weight:49.1,height:160.4,triceps:12.2,subscapular:10.1,supraspinal:10.4,medialCalf:11.3,humerus:6.1,femur:8.9,arm:28.0,calf:34.8,urineSpecificGravity:1.025,notes:"Registro ficticio."};
+  state.evaluations.push(calculateEvaluation(r1,a),calculateEvaluation(r2,b));
+  save();document.getElementById("view-project").value=p1.id;goTab("visualizacion");toast("Demostración cargada");
+}
+function clearAllData(){
+  if(!confirm("Se eliminarán todos los proyectos, participantes y evaluaciones guardados en este navegador. ¿Continuar?"))return;
+  state={projects:[],patients:[],evaluations:[]};
+  localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(LEGACY_STORAGE_KEY);
+  renderAll();toast("Datos locales eliminados");
+}
+function renderAll(){renderStats();renderProjects();renderSelects();renderPatients();renderProjectView();renderParticipantView()}
+window.addEventListener("afterprint",()=>{
+  document.body.classList.remove("print-project","print-visualization","print-participant");
+});
+function init(){
+  load();
+  document.getElementById("eval-date").value=todayISO();
+  updateHydrationPreview();
+  renderAll();
+  if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js?v=5.21").catch(()=>{});
+}
+init();
+</script>
+</body>
+</html>
