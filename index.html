@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f766e">
   <meta name="description" content="Aplicación local de antropometría OMS y somatotipo Heath-Carter">
   <link rel="manifest" href="manifest.json">
-  <title>Estudio Antropométrico · V5.21</title>
+  <title>Estudio Antropométrico · V5.22</title>
   <style>
     :root {
       --primary:#0f766e; --primary-dark:#115e59; --primary-soft:#ccfbf1;
@@ -879,14 +879,34 @@
     @media print{
       @page{size:A4 landscape;margin:8mm}
       *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-      body{background:#fff}
+      html,body{
+        background:#fff!important;
+        width:100%!important;
+        min-height:100%!important;
+        overflow:visible!important;
+        transform:none!important;
+      }
       .screen-only{display:none!important}
       .print-only{display:inline!important}
       .tabs,header,.no-print,.tab{display:none!important}
-      body.print-project #tab-visualizacion{display:block!important}
-      body.print-visualization #tab-visualizacion{display:block!important}
-      body.print-participant #tab-participante{display:block!important}
-      .app{max-width:none;padding:0}
+      body.print-project #tab-visualizacion,
+      body.print-visualization #tab-visualizacion,
+      body.print-participant #tab-participante{
+        display:block!important;
+        visibility:visible!important;
+        opacity:1!important;
+        position:static!important;
+        width:100%!important;
+        max-width:100%!important;
+        height:auto!important;
+        overflow:visible!important;
+      }
+      body.print-project #tab-visualizacion *,
+      body.print-visualization #tab-visualizacion *,
+      body.print-participant #tab-participante *{
+        visibility:visible;
+      }
+      .app{max-width:none;padding:0;display:block!important;visibility:visible!important}
       .card,.report-page{box-shadow:none}
       .report-page{border:0;padding:0}
       .report-evaluation{break-inside:avoid}
@@ -2033,12 +2053,38 @@ function renderParticipantView(){
     </div>
   </article>`).join(""):`<div class="empty">El participante todavía no tiene evaluaciones.</div>`;
 }
+function prepareAppPrint(tabName,printClass,renderFn){
+  // En algunos navegadores móviles, afterprint se dispara antes de que
+  // la vista previa termine de capturar el documento. Por eso las clases
+  // de impresión se conservan y se sustituyen únicamente al iniciar
+  // una nueva impresión.
+  document.body.classList.remove("print-project","print-visualization","print-participant");
+
+  const targetTab=document.getElementById(`tab-${tabName}`);
+  if(targetTab){
+    document.querySelectorAll(".tab").forEach(tab=>tab.classList.remove("active"));
+    targetTab.classList.add("active");
+  }
+
+  if(typeof renderFn==="function")renderFn();
+
+  document.body.classList.add(printClass);
+
+  // Fuerza el recálculo de diseño antes de abrir la vista previa.
+  void document.body.offsetHeight;
+
+  // Dos cuadros de animación y una pausa mayor permiten que canvas,
+  // tablas y fuentes terminen de dibujarse en Android/iOS.
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      setTimeout(()=>window.print(),650);
+    });
+  });
+}
 function printParticipantView(){
   const patientId=document.getElementById("participant-view-person")?.value;
   if(!patientId){toast("Selecciona un participante antes de imprimir.","bad");return}
-  renderParticipantView();
-  document.body.classList.add("print-participant");
-  setTimeout(()=>window.print(),180);
+  prepareAppPrint("participante","print-participant",renderParticipantView);
 }
 
 function projectEvaluations(projectId){
@@ -2214,9 +2260,7 @@ function printProjectView(){
   const date=selectedProjectDate();
   if(!projectId){toast("Selecciona un proyecto antes de imprimir.","bad");return}
   if(!date){toast("El proyecto no tiene una fecha de evaluación disponible.","bad");return}
-  renderProjectView();
-  document.body.classList.add("print-project");
-  setTimeout(()=>window.print(),180);
+  prepareAppPrint("visualizacion","print-project",renderProjectView);
 }
 
 function projectChartRows(){
@@ -2489,15 +2533,15 @@ function clearAllData(){
   renderAll();toast("Datos locales eliminados");
 }
 function renderAll(){renderStats();renderProjects();renderSelects();renderPatients();renderProjectView();renderParticipantView()}
-window.addEventListener("afterprint",()=>{
-  document.body.classList.remove("print-project","print-visualization","print-participant");
-});
+// Las clases de impresión no se eliminan en afterprint porque algunos
+// navegadores móviles emiten ese evento antes de capturar la vista previa.
+// prepareAppPrint las reemplaza de forma segura en la siguiente impresión.
 function init(){
   load();
   document.getElementById("eval-date").value=todayISO();
   updateHydrationPreview();
   renderAll();
-  if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js?v=5.21").catch(()=>{});
+  if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js?v=5.22").catch(()=>{});
 }
 init();
 </script>
